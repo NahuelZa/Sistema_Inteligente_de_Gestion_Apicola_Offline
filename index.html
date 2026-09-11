@@ -6,32 +6,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BeeKeep</title>
 </head>
-
 <body>
+<h2>BeeKeep: Registro de Inspección</h2>
+  
+  <div id="connectionStatus" class="status online">Conectado a Internet</div>
 
-    <h2>BeeKeep: Registro de Inspección</h2>
+  <div class="card">
+    <form id="inspectionForm">
+      <label for="colmenaId">Código/ID de Colmena:</label>
+      <input type="text" id="colmenaId" placeholder="Ej: COL-01" required>
 
-    <div id="connectionStatus" class="status online">Conectado a Internet</div>
+      <label for="notas">Observaciones / Notas:</label>
+      <textarea id="notas" rows="3" placeholder="Ej: Reina presente, reservas de miel óptimas" required></textarea>
 
-    <div class="card">
-        <form id="inspectionForm">
-            <label for="colmenaId">Código/ID de Colmena:</label>
-            <input type="text" id="colmenaId" placeholder="Ej: COL-01" required>
+      <button type="submit">Guardar Inspección</button>
+    </form>
+  </div>
 
-            <label for="notas">Observaciones / Notas:</label>
-            <textarea id="notas" rows="3" placeholder="Ej: Reina presente, reservas de miel óptimas"
-                required></textarea>
-
-            <button type="submit">Guardar Inspección</button>
-        </form>
-    </div>
-
-    <div class="card">
-        <h3>Último registro guardado localmente:</h3>
-        <pre id="localOutput">Esperando registros...</pre>
-    </div>
+  <div class="card">
+    <h3>Último registro guardado localmente:</h3>
+    <pre id="localOutput">Esperando registros...</pre>
+  </div>
     
     <script type="module" src="app.js"></script>
+    <script type="module" src="/src/main.ts"></script>
 </body>
 
 </html>
