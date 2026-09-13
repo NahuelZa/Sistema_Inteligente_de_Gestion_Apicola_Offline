@@ -11,8 +11,8 @@ import { dispatchNavigate } from "../../utils";
 /**
  * Vista de Alta de Colmena
  */
-@customElement("colmena-view")
-export class ColmenaView extends LitElement {
+@customElement("formulario-colmena")
+export class FormularioColmena extends LitElement {
   @property({ type: Array }) apiarios: DocumentWithId<Apiario>[] = [];
   @state() private loading = false;
 
@@ -54,7 +54,7 @@ export class ColmenaView extends LitElement {
 
     try {
       this.loading = true;
-      await colmenaService.create(nuevaColmena);
+      colmenaService.create(nuevaColmena);
       this.feedback.show(`¡Colmena "${numeroColmena}" guardada con éxito en ${apiarioId}!`, "success");
 
       apiarioSelect.value = "";
@@ -126,6 +126,6 @@ export class ColmenaView extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    "colmena-view": ColmenaView;
+    "formulario-colmena": FormularioColmena;
   }
 }
