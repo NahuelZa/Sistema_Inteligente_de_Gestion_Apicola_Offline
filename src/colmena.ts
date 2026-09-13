@@ -10,26 +10,41 @@ import '@awesome.me/webawesome/dist/components/callout/callout.js';
 import '@awesome.me/webawesome/dist/components/badge/badge.js';
 import '@awesome.me/webawesome/dist/components/icon/icon.js';
 import '@awesome.me/webawesome/dist/components/animation/animation.js';
-import '@awesome.me/webawesome/dist/components/dropdown/dropdown.js';
-import '@awesome.me/webawesome/dist/components/dropdown-item/dropdown-item.js';
+import '@awesome.me/webawesome/dist/components/select/select.js';
+import '@awesome.me/webawesome/dist/components/option/option.js';
 
 
 import { FirestoreService } from "./services";
-import type { Inspeccion } from "./models/inspeccion.model";
+import type { Colmena } from "./models/colmena.models";
 import { db } from "./config/firebase";
 
 export { db };
 
-// Instancia del servicio para la colección "inspecciones"
-const inspeccionesService = new FirestoreService<Inspeccion>("inspecciones");
+// Instancia del servicio para la colección "colmenas"
+const colmenasService = new FirestoreService<Colmena>("colmenas");
 
 // Elementos del DOM
-const form = document.getElementById("inspectionForm")! as HTMLFormElement;
+const form = document.getElementById("colmenaForm")! as HTMLFormElement;
 const statusCallout = document.getElementById("connectionStatus");
 const statusText = document.getElementById("connectionStatusText");
 const statusIcon = statusCallout?.querySelector("wa-icon");
 const outputPre = document.getElementById("localOutput")!;
 const submitBtn = document.getElementById("submitBtn");
+
+
+const dropdown = document.getElementById("estado") as HTMLElement | null;
+const triggerButton = dropdown?.querySelector('wa-button[slot="trigger"]') as HTMLElement | null;
+
+const errorMessageDiv = document.getElementById("errorMessage") as HTMLDivElement | null;
+
+dropdown?.addEventListener("wa-select", (event: Event) => {
+  const customEvent = event as CustomEvent;
+  const itemSeleccionado = customEvent.detail.item;
+
+  if (itemSeleccionado && triggerButton) {
+    triggerButton.textContent = itemSeleccionado.textContent;
+  }
+});
 
 // Detectar estado de la conexión a nivel de navegador
 window.addEventListener("online", updateNetworkStatus);
@@ -48,50 +63,53 @@ function updateNetworkStatus() {
 }
 updateNetworkStatus();
 
+export type EstadoColmena = "habilitada" | "inhabilitada";
+
 // Guardar inspección (Soportado completamente Offline)
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  const colmenaIdInput = document.getElementById("colmenaId") as HTMLInputElement | null;
-  const notasInput = document.getElementById("notas") as HTMLTextAreaElement | null;
+  const codigoInput = document.getElementById("colmenaId") as HTMLInputElement | null;
+  const apiarioIdInput = document.getElementById("apiarioId") as HTMLInputElement | null;
+  const estadoInput = document.getElementById("estado") as HTMLSelectElement | null;
 
-  const colmenaId = colmenaIdInput?.value?.trim() || "";
-  const notas = notasInput?.value?.trim() || "";
+  const codigo = codigoInput?.value?.trim() || "";
+  const apiarioId = apiarioIdInput?.value?.trim() || "";
+  const estado = estadoInput?.value as EstadoColmena | null;
 
-  if (!colmenaId || !notas) {
+  if (!codigo || !apiarioId || !estado) {
     return;
   }
 
-  const nuevaInspeccion: Inspeccion = {
-    colmenaId: colmenaId,
-    userId: "user_test_01", // Hardcodeado por ahora para la prueba
-    notas: notas,
-    fecha: FirestoreService.serverTimestamp(),
-    createdAtLocal: new Date().toISOString()
+  const nuevaColmena: Colmena = {
+    codigo: codigo,
+    apiario_id: apiarioId,
+    fecha_creacion: FirestoreService.serverTimestamp(),
+    estado: estado || "habilitada"
   };
 
   try {
     submitBtn?.setAttribute("loading", "");
+    errorMessageDiv!.textContent = ""
 
-    // Guarda inmediatamente en IndexedDB a través de la abstracción (incluso sin conexión)
-    const docId = await inspeccionesService.create(nuevaInspeccion);
-    
-    console.log("📝 Documento escrito localmente con ID:", docId);
-    form?.reset();
-
-    // Escuchar el estado de sincronización del documento creado
-    escucharEstadoSincronizacion(docId);
-
-  } catch (error) {
-    console.error("Error al guardar la inspección:", error);
+    // Guarda y checkea repetidos inmediatamente en IndexedDB y online a través de la abstracción (incluso sin conexión)
+    try {
+      const docId = await colmenasService.createWithUniqueId(nuevaColmena.codigo, nuevaColmena);
+      console.log("📝 Documento escrito localmente con ID:", docId);
+      form?.reset();
+      // Escuchar el estado de sincronización del documento creado
+      escucharEstadoSincronizacion(docId);
+    } catch (error) {
+      errorMessageDiv!.textContent = (error as Error).message;
+    }
   } finally {
     submitBtn?.removeAttribute("loading");
   }
 });
 
 // Verificar la sincronización e idempotencia con la nube usando el servicio
-function escucharEstadoSincronizacion(docId: string) {
-  inspeccionesService.listenById(docId, (doc, metadata) => {
+function escucharEstadoSincronizacion(colmenaId: string) {
+  colmenasService.listenById(colmenaId, (doc, metadata) => {
     if (!doc || !outputPre) return;
 
     // metadata.hasPendingWrites determina si el cambio aún vive solo en local

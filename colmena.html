@@ -13,13 +13,13 @@
             <div class="header-brand">
                 <h2>
                     <wa-icon name="cubes-stacked"></wa-icon>
-                    BeeKeep: Registro de Inspección
+                    BeeKeep: Registro de Colmena
                 </h2>
             </div>
             <div class="header-actions">
-                <wa-button id="reg-colmena" variant="brand" appearance="accent" href="/colmena.html">
+                <wa-button id="reg-colmena" variant="brand" appearance="accent" href="/index.html">
                     <wa-icon slot="start" name="house" style="color: #f59e0b;"></wa-icon>
-                    Registrar Colmena
+                    Volver a Inspecciones
                 </wa-button>
             </div>
         </header>
@@ -33,25 +33,33 @@
             <wa-card class="card">
                 <h3 slot="header">
                     <wa-icon name="clipboard-list"></wa-icon>
-                    Nueva Inspección
+                    Nueva Colmena
                 </h3>
-                <form id="inspectionForm" class="inspection-form">
+                <form id="colmenaForm" class="inspection-form">
                     <wa-input id="colmenaId" name="colmenaId" label="Código/ID de Colmena:" placeholder="Ej: COL-01"
                         required with-clear>
                         <wa-icon slot="start" name="hashtag"></wa-icon>
                     </wa-input>
 
-                    <wa-textarea id="notas" name="notas" label="Observaciones / Notas:" rows="3"
-                        placeholder="Ej: Reina presente, reservas de miel óptimas" required>
-                    </wa-textarea>
-
+                    <wa-input id="apiarioId" name="apiarioId" label="Código/ID de Apiario:" placeholder="Ej: API-01"
+                        required with-clear>
+                        <wa-icon slot="start" name="hashtag"></wa-icon>
+                    </wa-input>
+                    <wa-select id="estado" name="estado" label="Estado de la Colmena:" value="habilitada"
+                        style="width: max-content;" required>
+                        <wa-option value="habilitada">Habilitada</wa-option>
+                        <wa-option value="inhabilitada">Inhabilitada</wa-option>
+                    </wa-select>
                     <wa-button id="submitBtn" type="submit" variant="brand" appearance="accent">
                         <wa-icon slot="start" name="floppy-disk"></wa-icon>
-                        Guardar Inspección
+                        Guardar Colmena
                     </wa-button>
                 </form>
-            </wa-card>
 
+            </wa-card>
+            <div class="error-message" id="errorMessage" style="color: red; ">
+
+            </div>
             <wa-card class="card">
                 <h3 slot="header">
                     <wa-icon name="clock-rotate-left"></wa-icon>
@@ -64,7 +72,7 @@
 
     </wa-page>
 
-    <script type="module" src="/src/main.ts"></script>
+    <script type="module" src="/src/colmena.ts"></script>
 </body>
 
 </html>
