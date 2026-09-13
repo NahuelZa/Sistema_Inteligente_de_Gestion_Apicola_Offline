@@ -39,8 +39,8 @@ wa-page {
   gap: var(--wa-space-m);
 }
 /* View Content */
-apiario-view,
-colmena-view,
+formulario-apiario,
+formulario-colmena,
 listado-view {
   width: 100%;
   max-width: 600px;
