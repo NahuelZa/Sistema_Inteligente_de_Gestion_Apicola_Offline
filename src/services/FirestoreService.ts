@@ -5,6 +5,8 @@ import {
   deleteDoc,
   getDocs,
   serverTimestamp,
+  getDoc,
+  setDoc,
   type Firestore,
   type CollectionReference,
   type DocumentReference,
@@ -55,6 +57,25 @@ export class FirestoreService<T extends DocumentData = DocumentData> {
     const docRef = await addDoc(colRef, data as WithFieldValue<DocumentData>);
     return docRef.id;
   }
+
+  /**Crear documento con ID definido por usuario y verificar que no existe ya si existe
+   * no te deja guardar
+   */
+
+  public async createWithUniqueId(id: string,data: WithFieldValue<Omit<T, "id">>): Promise<string> {
+  const cleanId = id.trim();
+  // obtiene la referencia al documento con el ID proporcionado
+  const docRef = this.getDocRef(cleanId);
+  // verifica si el documento ya existe pasandole la referencia como parametro
+  const docSnap = await getDoc(docRef);
+
+  if (docSnap.exists()) {
+    throw new Error(`La colmena con ID '${cleanId}' ya existe.`);
+  }
+
+  await setDoc(docRef, data as WithFieldValue<DocumentData>);
+  return cleanId;
+}
 
   /**
    * Elimina un documento específico por su ID.
