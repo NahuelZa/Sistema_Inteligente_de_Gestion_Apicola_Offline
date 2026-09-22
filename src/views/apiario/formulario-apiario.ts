@@ -9,8 +9,8 @@ import { dispatchNavigate } from "../../utils";
 /**
  * Vista de Alta de Apiario
  */
-@customElement("apiario-view")
-class ApiarioView extends LitElement {
+@customElement("formulario-apiario")
+class FormularioApiario extends LitElement {
   static override properties = {
     loading: { type: Boolean },
   };
@@ -48,7 +48,7 @@ class ApiarioView extends LitElement {
 
     try {
       this.loading = true;
-      await apiarioService.create(nuevoApiario);
+      apiarioService.create(nuevoApiario);
       this.feedback.show(`¡Apiario "${nombre}" creado correctamente!`, "success");
 
       nombreInput.value = "";
@@ -143,6 +143,6 @@ class ApiarioView extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    "apiario-view": ApiarioView;
+    "formulario-apiario": FormularioApiario;
   }
 }

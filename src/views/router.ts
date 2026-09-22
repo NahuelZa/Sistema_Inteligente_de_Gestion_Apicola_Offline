@@ -8,8 +8,8 @@ import {ROUTES, VIEWS, type ViewType} from "../constants";
 import {NAVIGATE_EVENT, type NavigateDetail} from "../utils";
 import {apiarioService} from "../services";
 import {FirestoreController} from "../controllers";
-import "./apiario/apiario-view";
-import "./colmena/colmena-view";
+import "./apiario/formulario-apiario.ts";
+import "./colmena/formulario-colmena.ts";
 import "./listado/listado-view";
 
 export type { ViewType };
@@ -38,12 +38,12 @@ export class AppRouter extends LitElement {
     },
     {
       path: ROUTES.APIARIO,
-      render: () => html`<apiario-view></apiario-view>`,
+      render: () => html`<formulario-apiario></formulario-apiario>`,
       enter: () => this.setView(VIEWS.APIARIO),
     },
     {
       path: ROUTES.COLMENA,
-      render: () => html`<colmena-view .apiarios=${this.apiariosController.value}></colmena-view>`,
+      render: () => html`<formulario-colmena .apiarios=${this.apiariosController.value}></formulario-colmena>`,
       enter: () => {
         void this.apiariosController.load();
         return this.setView(VIEWS.COLMENA);
