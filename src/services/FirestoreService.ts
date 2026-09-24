@@ -5,8 +5,8 @@ import {
   deleteDoc,
   getDocs,
   serverTimestamp,
-  getDoc,
-  setDoc,
+  query,
+  where,
   type Firestore,
   type CollectionReference,
   type DocumentReference,
@@ -14,12 +14,13 @@ import {
   type WithFieldValue
 } from "firebase/firestore";
 import { db as defaultDb } from "../config/firebase";
+import { authService } from "./auth.service";
 
 export type DocumentWithId<T> = T & { id: string };
 
 /**
  * Clase genérica para abstraer y encapsular el acceso y operaciones con colecciones de Cloud Firestore.
- * Proporciona métodos CRUD y operaciones de consulta.
+ * Proporciona métodos CRUD, persistencia offline transparente y filtrado por usuario autenticado.
  */
 export class FirestoreService<T extends DocumentData = DocumentData> {
   protected readonly firestore: Firestore;
@@ -48,34 +49,22 @@ export class FirestoreService<T extends DocumentData = DocumentData> {
   }
 
   /**
-   * Crea un nuevo documento con un identificador generado automáticamente.
+   * Crea un nuevo documento asociándolo automáticamente al usuario actual y con timestamp local.
    * @param data Datos del documento a almacenar.
    * @returns Identificador asignado al nuevo documento.
    */
   public async create(data: WithFieldValue<Omit<T, "id">>): Promise<string> {
     const colRef = this.getCollectionRef();
-    const docRef = await addDoc(colRef, data as WithFieldValue<DocumentData>);
+    const currentUserId = authService.getCurrentUserId();
+    const payload: DocumentData = {
+      ...(data as DocumentData),
+      userId: (data as any).userId || currentUserId,
+      createdAtLocal: (data as any).createdAtLocal || new Date().toISOString()
+    };
+
+    const docRef = await addDoc(colRef, payload as WithFieldValue<DocumentData>);
     return docRef.id;
   }
-
-  /**Crear documento con ID definido por usuario y verificar que no existe ya si existe
-   * no te deja guardar
-   */
-
-  public async createWithUniqueId(id: string,data: WithFieldValue<Omit<T, "id">>): Promise<string> {
-  const cleanId = id.trim();
-  // obtiene la referencia al documento con el ID proporcionado
-  const docRef = this.getDocRef(cleanId);
-  // verifica si el documento ya existe pasandole la referencia como parametro
-  const docSnap = await getDoc(docRef);
-
-  if (docSnap.exists()) {
-    throw new Error(`La colmena con ID '${cleanId}' ya existe.`);
-  }
-
-  await setDoc(docRef, data as WithFieldValue<DocumentData>);
-  return cleanId;
-}
 
   /**
    * Elimina un documento específico por su ID.
@@ -87,12 +76,19 @@ export class FirestoreService<T extends DocumentData = DocumentData> {
   }
 
   /**
-   * Obtiene todos los documentos de la colección.
-   * @returns Lista de documentos con sus respectivos IDs.
+   * Obtiene todos los documentos de la colección pertenecientes al usuario actual (aislamiento multi-tenancy).
+   * @param userId Identificador de usuario opcional para filtrar explícitamente.
+   * @returns Lista de documentos del usuario con sus respectivos IDs.
    */
-  public async getAll(): Promise<DocumentWithId<T>[]> {
+  public async getAll(userId?: string): Promise<DocumentWithId<T>[]> {
     const colRef = this.getCollectionRef();
-    const snapshot = await getDocs(colRef);
+    const targetUserId = userId || authService.getCurrentUserId();
+
+    const createdQuery = targetUserId
+      ? query(colRef, where("userId", "==", targetUserId))
+      : colRef;
+
+    const snapshot = await getDocs(createdQuery);
     return snapshot.docs.map((docSnap) => ({
       ...(docSnap.data() as T),
       id: docSnap.id
