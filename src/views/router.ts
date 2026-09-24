@@ -1,5 +1,5 @@
-
 import {html, LitElement} from "lit";
+import {Router} from "@lit-labs/router";
 import "@awesome.me/webawesome/dist/components/page/page.js";
 import "@awesome.me/webawesome/dist/components/tab-group/tab-group.js";
 import "@awesome.me/webawesome/dist/components/tab/tab.js";
