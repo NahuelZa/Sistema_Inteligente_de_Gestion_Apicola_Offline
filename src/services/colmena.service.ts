@@ -1,5 +1,5 @@
 import { FirestoreService } from "./FirestoreService";
-import type { Colmena } from "../models/colmena.model";
+import type { Colmena } from "../models";
 import { COLLECTIONS } from "../constants";
 
 export class ColmenaService extends FirestoreService<Colmena> {

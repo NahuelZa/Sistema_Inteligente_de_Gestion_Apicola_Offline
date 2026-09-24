@@ -1,10 +1,9 @@
 import { LitElement, html } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { FeedbackController } from "../../controllers";
-import { colmenaService } from "../../services";
-import type { Colmena } from "../../models/colmena.model";
-import type { Apiario } from "../../models/apiario.model";
-import type { DocumentWithId } from "../../services/FirestoreService";
+import { colmenaService, authService } from "../../services";
+import type { Colmena, Apiario } from "../../models";
+import type { DocumentWithId } from "../../services";
 import { ROUTES } from "../../constants";
 import { dispatchNavigate } from "../../utils";
 
@@ -45,16 +44,18 @@ export class FormularioColmena extends LitElement {
     const notas = notasTextarea.value.trim();
 
     const nuevaColmena: Colmena = {
+      userId: authService.getCurrentUserId(),
       apiarioId,
       numeroColmena,
       fechaAlta,
+      estado: "activa",
       notas,
-      createdAt: new Date().toISOString(),
+      createdAtLocal: new Date().toISOString(),
     };
 
     try {
       this.loading = true;
-      colmenaService.create(nuevaColmena);
+      await colmenaService.create(nuevaColmena);
       this.feedback.show(`¡Colmena "${numeroColmena}" guardada con éxito en ${apiarioId}!`, "success");
 
       apiarioSelect.value = "";
@@ -79,8 +80,8 @@ export class FormularioColmena extends LitElement {
         <div class="form-group">
           <wa-select id="colmena-apiario" name="apiarioId" placeholder="Seleccione un apiario" required with-clear size="medium">
             <span slot="label" class="field-label">Apiario</span>
-            ${(this.apiarios || []).map(
-                (a) => html`<wa-option value=${a.nombre}>${a.nombre}</wa-option>`
+            ${this.apiarios.map(
+              (a) => html`<wa-option value=${a.id}>${a.nombre}</wa-option>`
             )}
           </wa-select>
         </div>

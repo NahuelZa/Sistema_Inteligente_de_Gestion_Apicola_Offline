@@ -1,21 +1,23 @@
-import {html, LitElement} from "lit";
-import {Router} from "@lit-labs/router";
+import { html, LitElement } from "lit";
+import { Router } from "@lit-labs/router";
 import "@awesome.me/webawesome/dist/components/page/page.js";
 import "@awesome.me/webawesome/dist/components/tab-group/tab-group.js";
 import "@awesome.me/webawesome/dist/components/tab/tab.js";
 import "@awesome.me/webawesome/dist/components/icon/icon.js";
-import {ROUTES, VIEWS, type ViewType} from "../constants";
-import {NAVIGATE_EVENT, type NavigateDetail} from "../utils";
-import {apiarioService} from "../services";
-import {FirestoreController} from "../controllers";
-import "./apiario/formulario-apiario.ts";
-import "./colmena/formulario-colmena.ts";
+import { ROUTES, VIEWS, type ViewType } from "../constants";
+import { NAVIGATE_EVENT, type NavigateDetail } from "../utils";
+import { apiarioService, colmenaService } from "../services";
+import { FirestoreController } from "../controllers";
+import "./apiario/formulario-apiario";
+import "./colmena/formulario-colmena";
+import "./inspeccion/formulario-inspeccion";
 import "./listado/listado-view";
+import "./components/sync-indicator";
 
 export type { ViewType };
 
 /**
- * Enrutador principal de la aplicación.
+ * Enrutador principal de la aplicación BeeKeep.
  */
 export class AppRouter extends LitElement {
   static override properties = {
@@ -24,6 +26,7 @@ export class AppRouter extends LitElement {
 
   private currentView: ViewType;
   private apiariosController = new FirestoreController(this, apiarioService);
+  private colmenasController = new FirestoreController(this, colmenaService);
 
   constructor() {
     super();
@@ -43,10 +46,39 @@ export class AppRouter extends LitElement {
     },
     {
       path: ROUTES.COLMENA,
-      render: () => html`<formulario-colmena .apiarios=${this.apiariosController.value}></formulario-colmena>`,
+      render: () =>
+        html`<formulario-colmena
+          .apiarios=${this.apiariosController.value}
+        ></formulario-colmena>`,
       enter: () => {
         void this.apiariosController.load();
         return this.setView(VIEWS.COLMENA);
+      },
+    },
+    {
+      path: ROUTES.INSPECCION,
+      render: () =>
+        html`<formulario-inspeccion
+          .colmenas=${this.colmenasController.value}
+          .apiarios=${this.apiariosController.value}
+        ></formulario-inspeccion>`,
+      enter: () => {
+        void this.colmenasController.load();
+        void this.apiariosController.load();
+        return this.setView(VIEWS.INSPECCION);
+      },
+    },
+    {
+      path: ROUTES.NUEVA_INSPECCION,
+      render: () =>
+        html`<formulario-inspeccion
+          .colmenas=${this.colmenasController.value}
+          .apiarios=${this.apiariosController.value}
+        ></formulario-inspeccion>`,
+      enter: () => {
+        void this.colmenasController.load();
+        void this.apiariosController.load();
+        return this.setView(VIEWS.INSPECCION);
       },
     },
     {
@@ -60,19 +92,14 @@ export class AppRouter extends LitElement {
       enter: () => this.setView(VIEWS.LISTADO_COLMENAS),
     },
     {
+      path: ROUTES.LISTADO_INSPECCIONES,
+      render: () => html`<listado-view type="inspecciones"></listado-view>`,
+      enter: () => this.setView(VIEWS.LISTADO_INSPECCIONES),
+    },
+    {
       path: ROUTES.LISTADO,
       render: () => html`<listado-view type="apiarios"></listado-view>`,
       enter: () => this.setView(VIEWS.LISTADO_APIARIOS),
-    },
-    {
-      path: "/listado-apiarios",
-      render: () => html`<listado-view type="apiarios"></listado-view>`,
-      enter: () => this.setView(VIEWS.LISTADO_APIARIOS),
-    },
-    {
-      path: "/listado-colmenas",
-      render: () => html`<listado-view type="colmenas"></listado-view>`,
-      enter: () => this.setView(VIEWS.LISTADO_COLMENAS),
     },
   ]);
 
@@ -116,17 +143,21 @@ export class AppRouter extends LitElement {
   override render() {
     return html`
       <wa-page>
-        <header
-          slot="header"
-          class="wa-stack wa-gap- view-header"
-        >
-          <h1
-            class="wa-heading-xl wa-font-weight-bold"
-            id="${this.currentView}-view-title"
-            style="margin: 0;"
-          >
-            ${this.getViewTitle()}
-          </h1>
+        <header slot="header" class="wa-stack view-header" style="gap: var(--wa-space-xs);">
+          <div class="wa-cluster wa-align-items-center wa-justify-content-between" style="width: 100%; padding-top: var(--wa-space-xs);">
+            <h1
+              class="wa-heading-xl wa-font-weight-bold"
+              id="${this.currentView}-view-title"
+              style="margin: 0; display: flex; align-items: center; gap: var(--wa-space-xs);"
+            >
+              <span>🐝</span>
+              <span>${this.getViewTitle()}</span>
+            </h1>
+
+            <div id="header-sync-container" style="margin-left: auto; display: flex; justify-content: flex-end;">
+              <sync-indicator></sync-indicator>
+            </div>
+          </div>
 
           <nav aria-label="Selector de vistas" style="width: 100%;">
             <wa-tab-group
@@ -160,6 +191,17 @@ export class AppRouter extends LitElement {
                 <wa-icon name="cube" style="margin-right: var(--wa-space-xs);"></wa-icon>
                 <span>Colmenas</span>
               </wa-tab>
+              <wa-tab
+                slot="nav"
+                panel=${VIEWS.LISTADO_INSPECCIONES}
+                id="tab-inspecciones"
+                class="wa-font-weight-semibold"
+                ?active=${this.currentView === VIEWS.LISTADO_INSPECCIONES}
+                @click=${() => this.navigate(ROUTES.LISTADO_INSPECCIONES)}
+              >
+                <wa-icon name="clipboard-check" style="margin-right: var(--wa-space-xs);"></wa-icon>
+                <span>Inspecciones</span>
+              </wa-tab>
             </wa-tab-group>
           </nav>
         </header>
@@ -180,8 +222,12 @@ export class AppRouter extends LitElement {
         return "Nuevo apiario";
       case VIEWS.COLMENA:
         return "Nueva colmena";
+      case VIEWS.INSPECCION:
+        return "Nueva inspección";
       case VIEWS.LISTADO_COLMENAS:
         return "Colmenas";
+      case VIEWS.LISTADO_INSPECCIONES:
+        return "Inspecciones de Campo";
       case VIEWS.LISTADO_APIARIOS:
       default:
         return "Apiarios";
@@ -211,7 +257,6 @@ export class ViewRouter {
     window.addEventListener("popstate", () => this.syncFromUrl());
     window.addEventListener("hashchange", () => this.syncFromUrl());
   }
-
 
   public async navigate(view: string): Promise<void> {
     await this.appRouter.navigate(view);

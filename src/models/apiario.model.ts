@@ -1,7 +1,9 @@
 export interface Apiario {
   id?: string;
+  userId: string;
   nombre: string;
   ubicacion: string;
   notas: string;
-  createdAt: string | any;
+  createdAtLocal?: string;
+  createdAt?: string | any;
 }

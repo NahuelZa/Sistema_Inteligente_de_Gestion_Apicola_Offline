@@ -1,8 +1,8 @@
 import { LitElement, html } from "lit";
 import { FeedbackController } from "../../controllers";
-import { customElement } from "lit/decorators.js";
-import { apiarioService } from "../../services";
-import type { Apiario } from "../../models/apiario.model";
+import { customElement, state } from "lit/decorators.js";
+import { apiarioService, authService } from "../../services";
+import type { Apiario } from "../../models";
 import { ROUTES } from "../../constants";
 import { dispatchNavigate } from "../../utils";
 
@@ -10,18 +10,9 @@ import { dispatchNavigate } from "../../utils";
  * Vista de Alta de Apiario
  */
 @customElement("formulario-apiario")
-class FormularioApiario extends LitElement {
-  static override properties = {
-    loading: { type: Boolean },
-  };
-
-  private loading: boolean;
+export class FormularioApiario extends LitElement {
+  @state() private loading = false;
   private feedback = new FeedbackController(this);
-
-  constructor() {
-    super();
-    this.loading = false;
-  }
 
   override createRenderRoot() {
     return this;
@@ -40,15 +31,16 @@ class FormularioApiario extends LitElement {
     const notas = descTextarea.value.trim();
 
     const nuevoApiario: Apiario = {
+      userId: authService.getCurrentUserId(),
       nombre,
       ubicacion,
       notas,
-      createdAt: new Date().toISOString(),
+      createdAtLocal: new Date().toISOString(),
     };
 
     try {
       this.loading = true;
-      apiarioService.create(nuevoApiario);
+      await apiarioService.create(nuevoApiario);
       this.feedback.show(`¡Apiario "${nombre}" creado correctamente!`, "success");
 
       nombreInput.value = "";
@@ -89,7 +81,7 @@ class FormularioApiario extends LitElement {
             id="apiario-ubicacion"
             name="ubicacion"
             label="Ubicación"
-            placeholder="Ubicación"
+            placeholder="Ubicación o referencia"
             with-clear
             size="medium"
           >
@@ -101,7 +93,7 @@ class FormularioApiario extends LitElement {
             id="apiario-descripcion"
             name="notas"
             label="Descripción / Notas"
-            placeholder="Descripción / Notas"
+            placeholder="Descripción o notas del terreno..."
             rows="3"
             size="medium"
           >
