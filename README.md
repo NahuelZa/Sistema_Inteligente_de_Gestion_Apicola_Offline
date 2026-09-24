@@ -1,225 +1,174 @@
-﻿#  TRABAJO FINAL INTEGRADOR
+# TRABAJO FINAL INTEGRADOR
 
-# 🐝 BeeKeep: Sistema Inteligente de Gestión Apícola Offline
+# 🐝 BeeKeep: Sistema Inteligente de Gestión Apícola Offline-First
 
 ## 📝 Descripción del Proyecto
 
-**BeeKeep** es (**VERIFICAR**) diseñada específicamente para apicultores que necesitan llevar un control estricto de sus apiarios y colmenas directamente en el campo. El proyecto nace para resolver un problema crítico en la industria: la falta de conectividad y la organizacion en las zonas rurales donde se encuentran los colmenares.
+**BeeKeep** es una Aplicación Web Progresiva (PWA) diseñada específicamente para apicultores que necesitan llevar un control operativo, sanitario y productivo de sus colmenares directamente en el campo. El proyecto resuelve la falta crítica de conectividad en zonas rurales mediante una arquitectura *Offline-First* nativa.
 
-A diferencia de los cuadernos de papel que se mojan o se pierden, o de las apps tradicionales que requieren internet permanente, **BeeKeep** funciona bajo la filosofía *Offline-First*. Permite registrar de manera ágil el estado de los apiarios, inspeccionar colmenas y guardar notas de voz, sincronizando toda la información de forma automática con la nube cuando el dispositivo recupera la señal.
+A diferencia de los registros tradicionales en papel que se deterioran o pierden, o de las aplicaciones convencionales que dependen de conexión continua, **BeeKeep** permite registrar inspecciones, altas de colmenas y traslados de forma inmediata en el dispositivo. La información se persiste localmente en IndexedDB y se sincroniza automáticamente con la nube (Cloud Firestore) cuando el dispositivo recupera señal de red.
 
 ---
 
-## 🎯 Características Principales
+## 🎯 Alcance y Decisiones de Arquitectura
 
-*   **Gestión de Apiarios**: Visualización clara del inventario de terrenos, coordenadas GPS y el conteo de colmenas activas calculado en tiempo real.
-*   **Arquitectura Offline-First**: Registro de inspecciones y movimientos en el campo 100% sin internet utilizando bases de datos locales y UUIDs para evitar conflictos de sincronización.
-*   **Identificación por Códigos QR**: Escaneo rápido de la colmena mediante la cámara del teléfono para abrir instantáneamente su historial médico y productivo.(**VERIFICAR**)
-*   **Historial de movimientos**: Registro de movimientos para rastrear cuándo y por qué una colmena fue trasladada de un apiario a otro.
-*   **Inspecciones Manos Libres**: Interfaz optimizada con botones de gran tamaño e integración de dictado por voz (Speech-to-Text) para operar cómodamente usando guantes de protección.
+A partir del análisis de requerimientos del dominio y las validaciones de arquitectura:
+
+1. **Modelo Operativo Mono-Dispositivo**: Para la fase inicial, cada apicultor opera con un único dispositivo en campo por cuenta de usuario. Esto simplifica la sincronización evitando complejidades de concurrencia distribuida innecesarias.
+2. **Diseño Inmutable / Append-Only**: Las inspecciones y los traslados de colmenas se registran como eventos históricos fechados con identificador único (UUID local). No se sobreescribe información pasada, lo que elimina condiciones de carrera y preserva la trazabilidad.
+3. **Rol de los UUIDs**: Los identificadores generados localmente garantizan unicidad e idempotencia. Cada registro local posee una clave unívoca antes de llegar a la nube, asegurando que ante reintentos de red no se dupliquen documentos en la base central.
+4. **Propiedad de Datos y Seguridad**: Cada apiario, colmena e inspección está asociado a un `userId`. Las consultas y reglas de seguridad aíslan completamente los datos y coordenadas geográficas de cada apicultor.
+5. **Estandarización del Dominio**: Se adopta formalmente la terminología **Apiario** (descartando "lote") y **Colmena**.
+6. **Entrada de Datos en Campo**: La búsqueda e ingreso manual por código visible de colmena es el mecanismo principal garantizado. El escaneo QR y el reconocimiento de voz se mantienen como complementos modulares (P1).
 
 ---
 
 ## 🛠️ Stack Tecnológico
 
-El proyecto está estructurado utilizando tecnologías modernas que garantizan portabilidad, velocidad y consistencia de datos:
+El stack seleccionado minimiza el riesgo de desarrollo, elimina discrepancias de mapeo relacional y aprovecha la persistencia local nativa del estándar Web:
 
-*   **Frontend**: Flutter (Dart) / React Native (Cross-platform iOS y Android).(**VERIFICAR**)
-*   **Base de Datos Local**: SQLite / Hive (Almacenamiento local optimizado).
-*   **Backend & Sincronización**: Firebase / Supabase (Sincronización automática en la nube).
+*   **Frontend**: [Lit 3](https://lit.dev/) (Web Components reactivos y ligeros) + [TypeScript](https://www.typescriptlang.org/) + [Vite](https://vitejs.dev/).
+*   **Diseño & UI**: [Web Awesome](https://www.webawesome.com/) (Componentes accesibles).
+*   **Persistencia Local y Sincronización**: [Firebase Firestore Web SDK v12](https://firebase.google.com/docs/firestore) con `persistentLocalCache` y `persistentMultipleTabManager` sobre **IndexedDB**.
+*   **Autenticación**: Firebase Auth para identificación y aislamiento por `userId`.
 
 ---
 
-### 🔄 Flujo de Datos y Sincronización
+### 🔄 Flujo de Sincronización Offline-First
 
 ```text
-[ Interfaz de Usuario (App) ]
-│
-▼
-┌──────────────────────────────┐
-│    Capa de Repositorio       │
-└────────────┬─────────────────┘
-│¿Hay Internet?
-├── NO ──> [ Base de Datos Local (SQLite/Hive) ] (Guarda el UUID de inmediato)│
-└── SÍ ──> [ Base de Datos Local ] ──(Sincronización)──> [ Nube (Firebase/Supabase) ]
+[ Interfaz de Usuario (Lit Components) ]
+                   │
+                   ▼
+[ Controladores & Servicios (FirestoreService's) ]
+                   │
+                   ▼
+┌──────────────────────────────────────────────────────────────────┐
+│              Firebase Firestore SDK (IndexedDB Cache)             │
+│   - Persistencia local inmediata con UUID local                 │
+│   - Detección de conectividad (Online / Offline)                 │
+│   - Cola de mutaciones pendientes (hasPendingWrites)             │
+└──────────────────┬───────────────────────────────────────────────┘
+                   │
+         ¿Conexión disponible?
+        ├── NO ──> Operación confirmada localmente en IndexedDB
+        └── SÍ ──> Sincronización automática/manual ──> [ Cloud Firestore ]
 ```
-
-1. **Captura Local Inmediata**: Cualquier acción (crear un apiario, registrar una inspección) se guarda primero en la base de datos interna del teléfono de forma instantánea.
-2. **Uso de UUIDs**: Cada registro genera un código único universal en el teléfono. Esto evita que los datos choquen o se dupliquen cuando se suban a internet.
-3. **Sincronización en Segundo Plano**: Un servicio oculto de la app detecta cuando el teléfono recupera la señal (Wi-Fi o datos móviles) y sube los cambios pendientes a la base de datos en la nube sin interrumpir al usuario.(**VERIFICAR**)
 
 ---
 
-### 🗂️ Estructura de Capas (Código Limpio)
-
-El código de la aplicación se divide en tres capas principales para separar las responsabilidades:
-
-*   **Capas de Presentación (UI)**: Contiene las pantallas, botones gigantes, el lector de códigos QR y los controladores de la interfaz de usuario. No sabe cómo se guardan los datos, solo los muestra.
-*   **Capa de Dominio (Lógica)**: Define las reglas del negocio de la apicultura (por ejemplo: "una colmena no puede estar en dos apiarios a la vez" o "calcular la cantidad de colmenas por apiario").
-*   **Capa de Datos (Data)**: Se encarga de la conexión con el exterior. Maneja la base de datos local (SQLite/Hive) y la lógica de sincronización con las APIs o servicios de la nube (Firebase/Supabase).
-
-## 🔄 Flujo de Datos Detallado (Casos de Uso)
-### Caso 1: Alta de un Nuevo Apiario con GPS
-
-Este flujo ocurre cuando el apicultor llega a un terreno nuevo y decide registrarlo como un punto de trabajo.
-Para entender cómo se comporta la aplicación, a continuación se describen los tres flujos de datos más importantes del sistema, cubriendo el ciclo de vida de la información desde el campo hasta la nube.
-```text
-[Pantalla "Nuevo Apiario"] ──(1. Clic Guardar)──> [Servicio GPS del Celular]
-│
-(2. Obtiene Coordenadas)
-│
-▼
-[Nube (Firebase/Supabase)] <──(4. Segundo Plano)── [Base de Datos Local](Disponible en la Web)(ID: UUID generado)
-```
-1. **Entrada de datos**: El usuario escribe el nombre (ej. "Apiario Las Acacias") y presiona el botón "Registrar Ubicación".
-2. **Captura de Hardware**: La app solicita al chip GPS del teléfono las coordenadas de latitud y longitud exactas.
-3. **Escritura Local (Instantánea)**: El sistema genera un `UUID` único y guarda el registro en la tabla `Apiarios` de la base de datos local. La interfaz se actualiza de inmediato mostrando el apiario con `0` colmenas.
-4. **Sincronización (Asíncrona)**: Si hay señal, el gestor de base de datos envía el registro a la nube. Si no, espera pacientemente en el teléfono.
-
----
-
-### Caso 2: Inspección de Colmena mediante Código QR (Modo Offline)(**VERIFICAR**)
-
-Este es el flujo más común. El apicultor está en el campo, sin internet, revisando una caja de abejas.
-```text
-[Cámara del Teléfono] ──(1. Escanea QR)──> [Busca ID localmente] ──> [Pantalla de la Colmena]
-│
-(2. Completa Formulario)
-│
-▼
-[Cola de Sincronización] <──(4. Agrega a cola) <── [Tabla 'Inspecciones' Local]
-```
-1. **Lectura**: El apicultor apunta la cámara al sticker QR de la colmena. La app traduce el QR en un ID (ej: `colmena-104`) y abre su historial.
-2. **Formulario Rápido**: El usuario marca con botones grandes que la reina está viva y que la población es alta. Si usa la voz, el teléfono traduce el audio a texto localmente.
-3. **Persistencia**: Al presionar "Guardar", se inserta una fila en la tabla `Inspecciones` local, amarrada al ID de la colmena.
-4. **Marcado de Pendiente**: El registro local se guarda con una bandera o estado de `sincronizado = false`.
-
----
-
-### Caso 3: Recuperación de Conectividad y Sincronización de Datos(**VERIFICAR**)
-Este flujo ocurre de forma invisible cuando el apicultor termina su jornada y regresa a su casa o a una zona con señal celular.
-```text
-[Red Móvil / Wi-Fi detectado]
-│
-▼
-[Filtra registros donde 'sincronizado == false']│▼[Envía datos en bloques (Batch) a la Nube]
-│
-▼
-[Nube responde OK] ───> [Cambia estado local a 'sincronizado == true']
-```
-1. **Escucha de Red**: Un "Listener" (oyente) del sistema operativo avisa a la app que el estado de la red cambió a "Conectado".
-2. **Lectura de Pendientes**: La app interroga a la base de datos local: *"Dame todo lo que se haya creado hoy que tenga la bandera `sincronizado = false`"*.
-3. **Envío Seguro**: Los datos se envían hacia Firebase/Supabase en paquetes pequeños para no saturar la conexión si la señal es débil.
-4. **Confirmación**: Una vez que el servidor de la nube confirma que guardó los datos con éxito, la app cambia la bandera local a `sincronizado = true`. El teléfono queda limpio y listo para el día siguiente.
----
 ## 📊 Diagrama de Entidad-Relación (DER)
-
-A continuación se muestra cómo se relacionan las tablas de la base de datos. Este diseño permite mantener el historial de cada colmena y sus revisiones, incluso si cambian de ubicación geográfica.
 
 ```mermaid
 erDiagram
+    USUARIOS ||--o{ APIARIOS : "posee"
+    USUARIOS ||--o{ COLMENAS : "gestiona"
+    USUARIOS ||--o{ INSPECCIONES : "registra"
     APIARIOS ||--o{ COLMENAS : "contiene"
     COLMENAS ||--o{ INSPECCIONES : "recibe"
     COLMENAS ||--o{ HISTORIAL_MOVIMIENTOS : "registra"
 
+    USUARIOS {
+        string uid PK
+        string email
+        string displayName
+    }
+
     APIARIOS {
         string id PK
+        string userId FK
         string nombre
-        decimal latitud
-        decimal longitud
+        string ubicacion
         string notas
+        string createdAtLocal
     }
 
     COLMENAS {
         string id PK
-        string apiario_id FK
-        string codigo_qr
-        date fecha_creacion
-        string estado_actual
+        string userId FK
+        string apiarioId FK
+        string numeroColmena
+        string fechaAlta
+        string estado
+        string notas
+        string createdAtLocal
     }
 
     INSPECCIONES {
         string id PK
-        string colmena_id FK
-        datetime fecha
-        int poblacion
-        boolean reina_vista
-        boolean tiene_postura
-        string enfermedades
-        string notas_voz_url
-        boolean sincronizado
+        string userId FK
+        string colmenaId FK
+        string apiarioId FK
+        string fecha
+        string poblacion
+        boolean reinaVista
+        boolean tienePostura
+        string estadoSanitario
+        string enfermedadesDetectadas
+        string notasTexto
+        string createdAtLocal
     }
 
     HISTORIAL_MOVIMIENTOS {
         string id PK
-        string colmena_id FK
-        string apiario_origen_id
-        string apiario_destino_id
-        date fecha_movimiento
+        string userId FK
+        string colmenaId FK
+        string apiarioOrigenId FK
+        string apiarioDestinoId FK
+        string fecha
+        string motivo
+        string createdAtLocal
     }
 ```
 
 ---
 
-### 🔑 Explicación de las Relaciones
+## 🗂️ Estructura del Proyecto
 
-*   **APIARIOS a COLMENAS (Uno a Muchos - `||--o{`)**: Un apiario puede tener muchas colmenas trabajando en él al mismo tiempo, pero una colmena en un momento específico solo puede pertenecer a un único apiario.
-*   **COLMENAS a INSPECCIONES (Uno a Muchos - `||--o{`)**: Una colmena va a ser revisada muchas veces a lo largo de su vida. Cada revisión genera una nueva fila en la tabla de inspecciones conectada a esa colmena a través de su ID.
-*   **COLMENAS a HISTORIAL\_MOVIMIENTOS (Uno a Muchos - `||--o{`)**: Sirve para auditar el camino de la colmena. Cada vez que una colmena viaja de un apiario a otro, se guarda el registro de dónde venía y a dónde fue, permitiendo reconstruir su ruta en el mapa.
----
-### Estructura del  Proyecto
 ```text
-beekeep-pwa/
-├── public/
-│   ├── favicon.ico
-│   ├── icon-192.png
-│   ├── icon-512.png
-│   └── manifest.json          # Configuración PWA (nombre, colores, iconos)
-│
-├── src/
-│   ├── assets/                # Estilos CSS, imágenes y recursos estáticos
-│   │   └── main.css
-│   │
-│   ├── config/                # Inicialización de servicios de terceros
-│   │   └── firebase.js        # Configuración de Firebase App, Auth y Firestore
-│   │
-│   ├── db/                    # Lógica de capa de datos local/offline
-│   │   └── offlineHandler.js  # Habilitación de IndexedDB y escuchadores de estado
-│   │
-│   ├── models/                # Estructuras de datos / Clases del dominio
-│   │   ├── Apiario.js
-│   │   ├── Colmena.js
-│   │   └── Inspeccion.js
-│   │
-│   ├── services/              # Operaciones con la base de datos (Firestore)
-│   │   ├── authService.js     # Login, logout y registro de apicultores
-│   │   ├── apiarioService.js  # CRUD de apiarios con filtrado por userId
-│   │   └── inspeccionService.js # Inserción de inspecciones (eventos históricos con UUID)
-│   │
-│   ├── ui/                    # Renderizado e interacción de interfaz
-│   │   ├── components/        # Componentes reutilizables de la UI
-│   │   │   ├── syncIndicator.js # Widget: última sincro, pendientes y errores
-│   │   │   └── navbar.js
-│   │   └── views/             # Vistas/Pantallas principales
-│   │       ├── loginView.js
-│   │       ├── apiariosView.js
-│   │       └── nuevaInspeccionView.js
-│   │
-│   ├── utils/                 # Funciones auxiliares genéricas
-│   │   ├── network.js         # Detección de conectividad (online/offline listeners)
-│   │   └── uuid.js            # Generador de identificadores únicos
-│   │
-│   ├── app.js                 # Punto de entrada de la aplicación / Router
-│   └── sw.js                  # Service Worker (Estrategia de caché offline)
-│
-├── index.html                 # Documento HTML principal
-├── package.json               # Dependencias y scripts de npm
-└── README.md                  # Documentación del proyecto y entrega
+src/
+├── assets/                    # Hojas de estilo y recursos gráficos
+│   └── main.css
+├── config/                    # Configuración e inicialización de SDKs
+│   └── firebase.ts            # Firestore con IndexedDB persistence + Auth
+├── constants/                 # Constantes globales y rutas de navegación
+│   └── index.ts
+├── controllers/               # Controladores reactivos Lit para suscripciones
+│   └── firestore-controller.ts
+├── models/                    # Definiciones de TypeScript e interfaces de dominio
+│   ├── apiario.model.ts
+│   ├── colmena.model.ts
+│   ├── inspeccion.model.ts
+│   └── index.ts
+├── services/                  # Capa de datos y operaciones Firestore
+│   ├── FirestoreService.ts    # Clase base genérica con filtrado por userId
+│   ├── apiario.service.ts
+│   ├── colmena.service.ts
+│   ├── inspeccion.service.ts
+│   └── index.ts
+├── views/                     # Vistas y componentes de interfaz
+│   ├── components/            # Componentes reutilizables
+│   │   ├── apiario-card.ts
+│   │   ├── colmena-card.ts
+│   │   ├── inspeccion-card.ts
+│   │   └── sync-indicator.ts  # Widget de estado de red, pendientes y sync manual
+│   ├── apiario/
+│   │   └── formulario-apiario.ts
+│   ├── colmena/
+│   │   └── formulario-colmena.ts
+│   ├── inspeccion/
+│   │   └── formulario-inspeccion.ts
+│   ├── listado/
+│   │   └── listado-view.ts
+│   └── router.ts              # Enrutador principal de la PWA
+├── main.ts                    # Punto de entrada y registro de Web Components
+└── vite-env.d.ts
 ```
+
 ---
 
- 
-👥 Integrantes del Equipo  
-[Nahuel Urciuolli Zabala] — GitHub: [@NahuelZa](https://github.com/NahuelZa)  
-[Luciano Joaquín Martínez] — GitHub: [@lucianomartinez27](https://github.com/lucianomartinez27)  
-[Santiago Rodriguez] — GitHub: [@Santi-R9](https://github.com/Santi-R97)  
+## 👥 Integrantes del Equipo
+
+*   **Nahuel Urciuolli Zabala** — GitHub: [@NahuelZa](https://github.com/NahuelZa)
+*   **Luciano Joaquín Martínez** — GitHub: [@lucianomartinez27](https://github.com/lucianomartinez27)
+*   **Santiago Rodriguez** — GitHub: [@Santi-R97](https://github.com/Santi-R97)
