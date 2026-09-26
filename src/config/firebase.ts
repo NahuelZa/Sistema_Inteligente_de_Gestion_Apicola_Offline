@@ -46,7 +46,3 @@ export const db: Firestore = firestoreInstance;
 
 export const auth: Auth = getAuth(app);
 
-// 🟢 Configurar la persistencia local de la sesión de usuario
-setPersistence(auth, browserLocalPersistence).catch((error) => {
-  console.error("Error al configurar la persistencia de auth:", error);
-});

@@ -54,9 +54,8 @@ export class FormularioInspeccion extends LitElement {
     const reinaVista = reinaCheckbox.checked;
     const tienePostura = posturaCheckbox.checked;
     const estadoSanitario = sanidadSelect.value.trim() as "bueno" | "alerta" | "enferma";
-    const enfermedadesDetectadas = enfermedadesInput.value.trim();
+    const enfermedadesDetectadas = enfermedadesInput?.value?.trim() || "No ingresado";
     const notas = notasTextarea.value.trim();
-
     const selectedColmena = this.colmenas.find((c) => c.id === colmenaId)!;
     const colmenaNumero = selectedColmena.numeroColmena;
     const apiarioId = selectedColmena.apiarioId;
