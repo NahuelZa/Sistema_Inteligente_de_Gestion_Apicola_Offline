@@ -48,7 +48,7 @@ export class ApiarioCard extends LitElement {
                 <div class="wa-cluster wa-gap-xs wa-align-items-center wa-caption-s wa-color-text-quiet">
                     <wa-icon name="calendar" class="wa-color-text-quiet"></wa-icon>
                     <span>
-              ${new Date(this.apiario.createdAt).toLocaleDateString("es-AR", {
+              ${new Date(this.apiario.createdAtLocal).toLocaleDateString("es-AR", {
                   year: "numeric",
                   month: "short",
                   day: "numeric",

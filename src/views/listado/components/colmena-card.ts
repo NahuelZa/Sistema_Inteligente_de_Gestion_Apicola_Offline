@@ -34,7 +34,7 @@ export class ColmenaCard extends LitElement {
           <wa-icon name="cube" style="color: var(--wa-color-brand); font-size: 1.15rem;"></wa-icon>
           <strong class="wa-heading-s">${this.colmena.numeroColmena}</strong>
         </div>
-        <wa-badge slot="header-actions" variant="neutral" appearance="accent" size="small">${this.colmena.apiarioId}</wa-badge>
+        <wa-badge slot="header-actions" variant="neutral" appearance="accent" size="small">${this.colmena.apiarioNombre}</wa-badge>
 
         <div class="wa-stack wa-gap-xs">
           <div class="wa-cluster wa-gap-xs wa-align-items-center wa-body-s wa-color-text-normal">

@@ -39,6 +39,7 @@ export class FormularioApiario extends LitElement {
       notas,
       createdAtLocal: new Date().toISOString(),
     };
+    console.log(nuevoApiario.createdAtLocal);
 
     try {
       this.loading = true;
