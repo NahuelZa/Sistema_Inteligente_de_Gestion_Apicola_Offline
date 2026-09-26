@@ -31,6 +31,7 @@ function toUserProfile(firebaseUser: FirebaseUser): UserProfile {
  */
 export class AuthService {
   private currentUser: UserProfile | null = null;
+  private userChecked: ((value: boolean | PromiseLike<boolean>) => void) | null = null;
 
   constructor() {
     this.listenForAuthChanges();
@@ -81,8 +82,14 @@ export class AuthService {
   /**
    * Indica si hay un usuario autenticado.
    */
-  public isAuthenticated(): boolean {
-    return this.currentUser !== null;
+  public isAuthenticated(): Promise<boolean> {
+    if (this.currentUser) {
+      return Promise.resolve(true);
+    }
+
+    const {promise, resolve} = Promise.withResolvers<boolean>();
+    this.userChecked = resolve;
+    return promise;
   }
 
   /**
@@ -92,9 +99,12 @@ export class AuthService {
     onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
         this.currentUser = toUserProfile(firebaseUser);
+        this.userChecked!(true);
       } else {
+        this.userChecked!(false);
         this.currentUser = null;
       }
+
     });
   }
 

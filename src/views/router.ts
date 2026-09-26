@@ -135,8 +135,9 @@ export class AppRouter extends LitElement {
    * Route guard that redirects to login if the user is not authenticated.
    * Returns `false` to reject the route match when unauthenticated.
    */
-  private requireAuth(onSuccess: () => boolean): boolean {
-    if (!authService.isAuthenticated()) {
+  private async requireAuth(onSuccess: () => boolean) {
+      const isAuthenticated = await authService.isAuthenticated();
+      if (!isAuthenticated) {
       void this.navigate(ROUTES.LOGIN);
       return false;
     }
