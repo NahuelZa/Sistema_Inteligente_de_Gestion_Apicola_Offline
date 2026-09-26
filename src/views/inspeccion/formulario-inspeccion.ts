@@ -78,7 +78,7 @@ export class FormularioInspeccion extends LitElement {
 
     try {
       this.loading = true;
-      await inspeccionService.create(nuevaInspeccion);
+      inspeccionService.create(nuevaInspeccion);
       this.feedback.show(`¡Inspección para la colmena "${colmenaNumero}" registrada correctamente!`, "success");
 
       colmenaSelect.value = "";

@@ -60,7 +60,7 @@ export class FormularioColmena extends LitElement {
 
     try {
       this.loading = true;
-      await colmenaService.create(nuevaColmena);
+      colmenaService.create(nuevaColmena);
       this.feedback.show(`¡Colmena "${numeroColmena}" guardada con éxito en ${apiarioNombre}!`, "success");
 
       apiarioSelect.value = "";

@@ -1,5 +1,5 @@
 import { nothing, type ReactiveController, type ReactiveControllerHost } from "lit";
-import type { DocumentData, WithFieldValue } from "firebase/firestore";
+import {doc, type DocumentData, type WithFieldValue} from "firebase/firestore";
 import type { FirestoreService, DocumentWithId } from "../services/FirestoreService";
 
 export type TaskStatus = "initial" | "pending" | "complete" | "error";
@@ -48,7 +48,14 @@ export class FirestoreController<T extends DocumentData = DocumentData> implemen
 
   hostConnected(): void {
     if (this.options.autoLoad !== false) {
-      void this.load();
+      void this.loadAndAddListeners();
+    }
+  }
+
+  private async loadAndAddListeners() {
+    const data = await this.loadDocuments();
+    for (const doc of data) {
+      window.addEventListener("online", () => this.service.onSyncDo(doc.id, () => this.loadDocuments()));
     }
   }
 
@@ -61,7 +68,7 @@ export class FirestoreController<T extends DocumentData = DocumentData> implemen
    * Ejecuta la carga asíncrona de todos los documentos de la colección.
    * Maneja condiciones de carrera ignorando respuestas obsoletas.
    */
-  public async load(): Promise<DocumentWithId<T>[]> {
+  public async loadDocuments(): Promise<DocumentWithId<T>[]> {
     const runId = ++this.currentRunId;
     this.status = "pending";
     this.error = null;
@@ -95,7 +102,7 @@ export class FirestoreController<T extends DocumentData = DocumentData> implemen
    * Elimina un documento por su ID y actualiza el estado local de la lista.
    */
   public async delete(id: string): Promise<void> {
-    await this.service.delete(id);
+    this.service.delete(id);
     this.value = this.value.filter((item) => item.id !== id);
     this.host.requestUpdate();
   }

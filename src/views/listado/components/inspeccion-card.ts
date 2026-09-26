@@ -57,16 +57,15 @@ export class InspeccionCard extends LitElement {
           <wa-icon name="clipboard-check" style="color: var(--wa-color-brand); font-size: 1.15rem;"></wa-icon>
           <strong class="wa-heading-s">Inspección - Colmena ${colmenaLabel}</strong>
         </div>
-
-        <div slot="header-actions" class="wa-cluster wa-gap-2xs">
-          <wa-badge
-            variant=${this.getSanidadBadgeVariant(this.inspeccion.estadoSanitario)}
-            appearance="accent"
-            size="small"
-          >
-            Sanidad: ${this.inspeccion.estadoSanitario || "N/A"}
-          </wa-badge>
-        </div>
+          <div slot="header-actions" class="wa-cluster wa-gap-2xs">
+              <document-sync-status .documento=${this.inspeccion}></document-sync-status>
+              <wa-badge
+                      variant=${this.getSanidadBadgeVariant(this.inspeccion.estadoSanitario)}
+                      appearance="accent"
+                      size="small"
+              >
+                  Sanidad: ${this.inspeccion.estadoSanitario || "N/A"}
+              </wa-badge>          </div>
 
         <div class="wa-stack wa-gap-s">
           <div class="wa-cluster wa-gap-xs wa-align-items-center wa-caption-s wa-color-text-quiet">

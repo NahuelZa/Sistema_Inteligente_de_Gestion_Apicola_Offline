@@ -54,14 +54,14 @@ export class ListadoView extends LitElement {
   override updated(changedProperties: Map<string, any>) {
     if (changedProperties.has("type")) {
       if (this.type === "inspecciones") {
-        void this.inspeccionesTask.load();
-        void this.colmenasTask.load();
-        void this.apiariosTask.load();
+        void this.inspeccionesTask.loadDocuments();
+        void this.colmenasTask.loadDocuments();
+        void this.apiariosTask.loadDocuments();
       } else if (this.type === "colmenas") {
-        void this.colmenasTask.load();
-        void this.apiariosTask.load();
+        void this.colmenasTask.loadDocuments();
+        void this.apiariosTask.loadDocuments();
       } else {
-        void this.apiariosTask.load();
+        void this.apiariosTask.loadDocuments();
       }
     }
   }
@@ -136,7 +136,7 @@ export class ListadoView extends LitElement {
               <h3 class="wa-heading-m" style="margin: 0;">Error al cargar apiarios</h3>
               <p class="wa-body-s wa-color-text-quiet" style="margin: 0;">No se pudieron obtener los datos. Intenta nuevamente.</p>
             </div>
-            <wa-button variant="brand" appearance="accent" size="medium" @click=${() => this.apiariosTask.load()}>
+            <wa-button variant="brand" appearance="accent" size="medium" @click=${() => this.apiariosTask.loadDocuments()}>
               <wa-icon slot="start" name="arrow-rotate-right"></wa-icon>
               Reintentar
             </wa-button>
@@ -208,7 +208,7 @@ export class ListadoView extends LitElement {
               <h3 class="wa-heading-m" style="margin: 0;">Error al cargar colmenas</h3>
               <p class="wa-body-s wa-color-text-quiet" style="margin: 0;">No se pudieron obtener los datos. Intenta nuevamente.</p>
             </div>
-            <wa-button variant="brand" appearance="accent" size="medium" @click=${() => this.colmenasTask.load()}>
+            <wa-button variant="brand" appearance="accent" size="medium" @click=${() => this.colmenasTask.loadDocuments()}>
               <wa-icon slot="start" name="arrow-rotate-right"></wa-icon>
               Reintentar
             </wa-button>
@@ -280,7 +280,7 @@ export class ListadoView extends LitElement {
               <h3 class="wa-heading-m" style="margin: 0;">Error al cargar inspecciones</h3>
               <p class="wa-body-s wa-color-text-quiet" style="margin: 0;">No se pudieron obtener los datos. Intenta nuevamente.</p>
             </div>
-            <wa-button variant="brand" appearance="accent" size="medium" @click=${() => this.inspeccionesTask.load()}>
+            <wa-button variant="brand" appearance="accent" size="medium" @click=${() => this.inspeccionesTask.loadDocuments()}>
               <wa-icon slot="start" name="arrow-rotate-right"></wa-icon>
               Reintentar
             </wa-button>

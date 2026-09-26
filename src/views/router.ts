@@ -58,7 +58,7 @@ export class AppRouter extends LitElement {
           .apiarios=${this.apiariosController.value}
         ></formulario-colmena>`,
       enter: () => {
-        void this.apiariosController.load();
+        void this.apiariosController.loadDocuments();
         return this.requireAuth(() => this.setView(VIEWS.COLMENA));
       },
     },
@@ -70,8 +70,8 @@ export class AppRouter extends LitElement {
           .apiarios=${this.apiariosController.value}
         ></formulario-inspeccion>`,
       enter: () => {
-        void this.colmenasController.load();
-        void this.apiariosController.load();
+        void this.colmenasController.loadDocuments();
+        void this.apiariosController.loadDocuments();
         return this.requireAuth(() => this.setView(VIEWS.INSPECCION));
       },
     },
@@ -83,8 +83,8 @@ export class AppRouter extends LitElement {
           .apiarios=${this.apiariosController.value}
         ></formulario-inspeccion>`,
       enter: () => {
-        void this.colmenasController.load();
-        void this.apiariosController.load();
+        void this.colmenasController.loadDocuments();
+        void this.apiariosController.loadDocuments();
         return this.requireAuth(() => this.setView(VIEWS.INSPECCION));
       },
     },

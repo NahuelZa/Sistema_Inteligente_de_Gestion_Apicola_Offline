@@ -3,7 +3,8 @@ import {
   doc,
   addDoc,
   deleteDoc,
-  getDocs,
+  onSnapshot,
+  onSnapshotsInSync,
   serverTimestamp,
   query,
   where,
@@ -16,7 +17,7 @@ import {
 import { db as defaultDb } from "../config/firebase";
 import { authService } from "./auth.service";
 
-export type DocumentWithId<T> = T & { id: string };
+export type DocumentWithId<T> = T & { id: string, estaSincronizado?: boolean };
 
 /**
  * Clase genérica para abstraer y encapsular el acceso y operaciones con colecciones de Cloud Firestore.
@@ -78,28 +79,55 @@ export class FirestoreService<T extends DocumentData = DocumentData> {
     await deleteDoc(docRef);
   }
 
+  public onSyncDo(id: string, callback: () => void) {
+    const docRef = this.getDocRef(id);
+    const unsubscribe = onSnapshot(
+        docRef,
+        { includeMetadataChanges: true },
+        (snapshot) => {
+          const isSyncedWithServer =
+              !snapshot.metadata.fromCache && !snapshot.metadata.hasPendingWrites;
+
+          if (isSyncedWithServer) {
+            callback();
+            unsubscribe();
+          }
+        }
+    );
+  }
+
   /**
    * Obtiene todos los documentos de la colección pertenecientes al usuario actual (aislamiento multi-tenancy).
    * @param userId Identificador de usuario opcional para filtrar explícitamente.
    * @returns Lista de documentos del usuario con sus respectivos IDs.
    */
   public async getAll(userId?: string): Promise<DocumentWithId<T>[]> {
-    const colRef = this.getCollectionRef();
     const targetUserId = userId || authService.getCurrentUserId();
-
     if (!targetUserId) {
       throw new Error(`No se puede obtener "${this.collectionName}"`);
     }
 
-    const createdQuery = targetUserId
-      ? query(colRef, where("userId", "==", targetUserId))
-      : colRef;
+    const colRef = this.getCollectionRef();
 
-    const snapshot = await getDocs(createdQuery);
-    return snapshot.docs.map((docSnap) => ({
-      ...(docSnap.data() as T),
-      id: docSnap.id
-    }));
+    const createdQuery = targetUserId
+        ? query(colRef, where("userId", "==", targetUserId))
+        : colRef;
+
+    return new Promise((resolve, reject) => {
+      onSnapshot(
+          createdQuery,
+          { includeMetadataChanges: true },
+          (snapshot) => {
+            const docs = snapshot.docs.map((docSnap) => ({
+              ...(docSnap.data() as T),
+              id: docSnap.id,
+              estaSincronizado: !docSnap.metadata.hasPendingWrites,
+            }));
+            resolve(docs);
+          },
+          reject
+      );
+    });
   }
 
   // Utilidades estáticas de Firestore

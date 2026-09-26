@@ -43,7 +43,7 @@ export class FormularioApiario extends LitElement {
 
     try {
       this.loading = true;
-      await apiarioService.create(nuevoApiario);
+      apiarioService.create(nuevoApiario);
       this.feedback.show(`¡Apiario "${nombre}" creado correctamente!`, "success");
 
       nombreInput.value = "";
