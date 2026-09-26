@@ -1,9 +1,6 @@
 import {html, LitElement} from "lit";
 import {Router} from "@lit-labs/router";
 import "@awesome.me/webawesome/dist/components/page/page.js";
-import "@awesome.me/webawesome/dist/components/tab-group/tab-group.js";
-import "@awesome.me/webawesome/dist/components/tab/tab.js";
-import "@awesome.me/webawesome/dist/components/tab-panel/tab-panel.js";
 import "@awesome.me/webawesome/dist/components/icon/icon.js";
 import "@awesome.me/webawesome/dist/components/button/button.js";
 
@@ -14,6 +11,7 @@ import {FirestoreController} from "../controllers";
 import "./apiario/formulario-apiario";
 import "./colmena/formulario-colmena";
 import "./inspeccion/formulario-inspeccion";
+import "./home/home-view";
 import "./listado/listado-view";
 import "./login/login-view";
 import "./components/sync-indicator";
@@ -49,61 +47,7 @@ export class AppRouter extends LitElement {
         {
             path: ROUTES.HOME,
             render: () => html`
-                <wa-tab-group
-                        id="view-switcher"
-                        active=${this.currentView}
-                        @wa-tab-show=${(e: CustomEvent<{ name: string }>) => {
-                            const view = e.detail.name;
-                            void this.setView(view as ViewType);
-                        }}
-                >
-
-                    <wa-tab
-                            slot="nav"
-                            panel=${VIEWS.LISTADO_APIARIOS}
-                            id="tab-apiarios"
-                            class="wa-font-weight-semibold"
-                            ?active=${this.currentView === VIEWS.LISTADO_APIARIOS}
-                    >
-                        <wa-icon name="cubes-stacked" style="margin-right: var(--wa-space-xs);"></wa-icon>
-                        <span>Apiarios</span>
-                    </wa-tab>
-                    <wa-tab
-                            slot="nav"
-                            panel=${VIEWS.LISTADO_COLMENAS}
-                            id="tab-colmenas"
-                            class="wa-font-weight-semibold"
-                            ?active=${this.currentView === VIEWS.LISTADO_COLMENAS}
-                    >
-                        <wa-icon name="cube" style="margin-right: var(--wa-space-xs);"></wa-icon>
-                        <span>Colmenas</span>
-                    </wa-tab>
-                    <wa-tab
-                            slot="nav"
-                            panel=${VIEWS.LISTADO_INSPECCIONES}
-                            id="tab-inspecciones"
-                            class="wa-font-weight-semibold"
-                            ?active=${this.currentView === VIEWS.LISTADO_INSPECCIONES}
-                    >
-                        <wa-icon name="clipboard-check" style="margin-right: var(--wa-space-xs);"></wa-icon>
-                        <span>Inspecciones</span>
-                    </wa-tab>
-                    <wa-tab-panel
-                            name=${VIEWS.LISTADO_APIARIOS}>
-                        <listado-view type=${VIEWS.LISTADO_APIARIOS}></listado-view>
-                    </wa-tab-panel>
-                    <wa-tab-panel
-                            name=${VIEWS.LISTADO_COLMENAS}
-                    >
-                        <listado-view type=${VIEWS.LISTADO_COLMENAS}></listado-view>
-                    </wa-tab-panel>
-                    <wa-tab-panel
-                            name=${VIEWS.LISTADO_INSPECCIONES}
-                    >
-                        <listado-view type=${VIEWS.LISTADO_INSPECCIONES}></listado-view>
-                    </wa-tab-panel>
-                </wa-tab-group>
-            `,
+                <home-view></home-view>`,
             enter: () =>
                 this.requireAuth(() => {
                     void this.apiariosController.loadDocuments();
