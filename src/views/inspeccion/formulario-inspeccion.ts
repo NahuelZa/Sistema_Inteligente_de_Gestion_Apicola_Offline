@@ -61,10 +61,6 @@ export class FormularioInspeccion extends LitElement {
     const colmenaNumero = selectedColmena.numeroColmena;
     const apiarioId = selectedColmena.apiarioId;
 
-    if (!authService.isAuthenticated()) {
-      dispatchNavigate(this, ROUTES.LOGIN);
-      return;
-    }
 
     const userId = authService.getCurrentUserId()!;
     const nuevaInspeccion: Inspeccion = {

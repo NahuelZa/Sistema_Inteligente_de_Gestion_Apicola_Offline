@@ -30,11 +30,6 @@ export class FormularioApiario extends LitElement {
     const ubicacion = ubicacionInput.value.trim();
     const notas = descTextarea.value.trim();
 
-    // TO-DO: extraer validacion para utilizar en todos los formularios (apiario, colmena, inspección)
-    if (!authService.isAuthenticated()) {
-      dispatchNavigate(this, ROUTES.LOGIN);
-      return;
-    }
 
     const userId = authService.getCurrentUserId()!;
     const nuevoApiario: Apiario = {

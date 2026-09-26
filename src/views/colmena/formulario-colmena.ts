@@ -43,10 +43,6 @@ export class FormularioColmena extends LitElement {
     const fechaAlta = fechaInput.value.trim();
     const notas = notasTextarea.value.trim();
 
-    if (!authService.isAuthenticated()) {
-      dispatchNavigate(this, ROUTES.LOGIN);
-      return;
-    }
 
     const userId = authService.getCurrentUserId()!;
     const nuevaColmena: Colmena = {

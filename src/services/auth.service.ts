@@ -27,7 +27,7 @@ function toUserProfile(firebaseUser: FirebaseUser): UserProfile {
 /**
  * Servicio de Autenticación y Contexto de Usuario para BeeKeep.
  * Utiliza Firebase Authentication para identificar al apicultor actual
- * y garantizar el aislamiento de datos (multi-tenancy).
+ * y garantizar el aislamiento de datos.
  */
 export class AuthService {
   private currentUser: UserProfile | null = null;

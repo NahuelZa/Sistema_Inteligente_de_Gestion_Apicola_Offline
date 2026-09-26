@@ -44,12 +44,12 @@ export class AppRouter extends LitElement {
     {
       path: ROUTES.HOME,
       render: () => html`<listado-view type="apiarios"></listado-view>`,
-      enter: () => this.setView(VIEWS.LISTADO_APIARIOS),
+      enter: () => this.requireAuth(() => this.setView(VIEWS.LISTADO_APIARIOS)),
     },
     {
       path: ROUTES.APIARIO,
       render: () => html`<formulario-apiario></formulario-apiario>`,
-      enter: () => this.setView(VIEWS.APIARIO),
+      enter: () => this.requireAuth(() => this.setView(VIEWS.APIARIO)),
     },
     {
       path: ROUTES.COLMENA,
@@ -59,7 +59,7 @@ export class AppRouter extends LitElement {
         ></formulario-colmena>`,
       enter: () => {
         void this.apiariosController.load();
-        return this.setView(VIEWS.COLMENA);
+        return this.requireAuth(() => this.setView(VIEWS.COLMENA));
       },
     },
     {
@@ -72,7 +72,7 @@ export class AppRouter extends LitElement {
       enter: () => {
         void this.colmenasController.load();
         void this.apiariosController.load();
-        return this.setView(VIEWS.INSPECCION);
+        return this.requireAuth(() => this.setView(VIEWS.INSPECCION));
       },
     },
     {
@@ -85,28 +85,28 @@ export class AppRouter extends LitElement {
       enter: () => {
         void this.colmenasController.load();
         void this.apiariosController.load();
-        return this.setView(VIEWS.INSPECCION);
+        return this.requireAuth(() => this.setView(VIEWS.INSPECCION));
       },
     },
     {
       path: ROUTES.LISTADO_APIARIOS,
       render: () => html`<listado-view type="apiarios"></listado-view>`,
-      enter: () => this.setView(VIEWS.LISTADO_APIARIOS),
+      enter: () => this.requireAuth(() => this.setView(VIEWS.LISTADO_APIARIOS)),
     },
     {
       path: ROUTES.LISTADO_COLMENAS,
       render: () => html`<listado-view type="colmenas"></listado-view>`,
-      enter: () => this.setView(VIEWS.LISTADO_COLMENAS),
+      enter: () => this.requireAuth(() => this.setView(VIEWS.LISTADO_COLMENAS)),
     },
     {
       path: ROUTES.LISTADO_INSPECCIONES,
       render: () => html`<listado-view type="inspecciones"></listado-view>`,
-      enter: () => this.setView(VIEWS.LISTADO_INSPECCIONES),
+      enter: () => this.requireAuth(() => this.setView(VIEWS.LISTADO_INSPECCIONES)),
     },
     {
       path: ROUTES.LISTADO,
       render: () => html`<listado-view type="apiarios"></listado-view>`,
-      enter: () => this.setView(VIEWS.LISTADO_APIARIOS),
+      enter: () => this.requireAuth(() => this.setView(VIEWS.LISTADO_APIARIOS)),
     },
   ]);
 
@@ -130,6 +130,18 @@ export class AppRouter extends LitElement {
       void this.navigate(e.detail.path);
     }
   };
+
+  /**
+   * Route guard that redirects to login if the user is not authenticated.
+   * Returns `false` to reject the route match when unauthenticated.
+   */
+  private requireAuth(onSuccess: () => boolean): boolean {
+    if (!authService.isAuthenticated()) {
+      void this.navigate(ROUTES.LOGIN);
+      return false;
+    }
+    return onSuccess();
+  }
 
   private setView(view: ViewType): boolean {
     this.currentView = view;
