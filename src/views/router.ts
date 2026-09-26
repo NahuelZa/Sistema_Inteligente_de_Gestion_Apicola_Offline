@@ -4,14 +4,16 @@ import "@awesome.me/webawesome/dist/components/page/page.js";
 import "@awesome.me/webawesome/dist/components/tab-group/tab-group.js";
 import "@awesome.me/webawesome/dist/components/tab/tab.js";
 import "@awesome.me/webawesome/dist/components/icon/icon.js";
+import "@awesome.me/webawesome/dist/components/button/button.js";
 import { ROUTES, VIEWS, type ViewType } from "../constants";
 import { NAVIGATE_EVENT, type NavigateDetail } from "../utils";
-import { apiarioService, colmenaService } from "../services";
+import { apiarioService, colmenaService, authService } from "../services";
 import { FirestoreController } from "../controllers";
 import "./apiario/formulario-apiario";
 import "./colmena/formulario-colmena";
 import "./inspeccion/formulario-inspeccion";
 import "./listado/listado-view";
+import "./login/login-view";
 import "./components/sync-indicator";
 
 export type { ViewType };
@@ -34,6 +36,11 @@ export class AppRouter extends LitElement {
   }
 
   private router = new Router(this, [
+    {
+      path: ROUTES.LOGIN,
+      render: () => html`<login-view></login-view>`,
+      enter: () => this.setView(VIEWS.LOGIN),
+    },
     {
       path: ROUTES.HOME,
       render: () => html`<listado-view type="apiarios"></listado-view>`,
@@ -152,10 +159,22 @@ export class AppRouter extends LitElement {
             >
               <span>🐝</span>
               <span>${this.getViewTitle()}</span>
+              ${this.currentView !== VIEWS.LOGIN ? html`
+              <wa-button
+                  variant="neutral"
+                  appearance="accent"
+                  size="xs"
+                  @click=${() => this.handleLogout()}
+              >
+                <wa-icon slot="start" name="arrow-right-from-bracket"></wa-icon>
+                Cerrar sesión
+              </wa-button>
+            ` : html``}
             </h1>
 
-            <div id="header-sync-container" style="margin-left: auto; display: flex; justify-content: flex-end;">
+            <div id="header-sync-container" style="margin-left: auto; display: flex; align-items: center; gap: var(--wa-space-s);">
               <sync-indicator></sync-indicator>
+
             </div>
           </div>
 
@@ -218,6 +237,8 @@ export class AppRouter extends LitElement {
 
   private getViewTitle() {
     switch (this.currentView) {
+      case VIEWS.LOGIN:
+        return "Iniciar sesión";
       case VIEWS.APIARIO:
         return "Nuevo apiario";
       case VIEWS.COLMENA:
@@ -232,6 +253,11 @@ export class AppRouter extends LitElement {
       default:
         return "Apiarios";
     }
+  }
+
+  private handleLogout() {
+    authService.logout();
+    void this.navigate(ROUTES.LOGIN);
   }
 }
 

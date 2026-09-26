@@ -1,44 +1,103 @@
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  type User as FirebaseUser
+} from "firebase/auth";
+import { auth } from "../config/firebase";
+
 export interface UserProfile {
   uid: string;
   email: string;
   displayName: string;
 }
 
-const STORAGE_KEY = "beekeep_current_user";
-const DEFAULT_USER: UserProfile = {
-  uid: "apicultor-demo-01",
-  email: "apicultor@beekeep.local",
-  displayName: "Apicultor Principal"
-};
+/**
+ * Convierte un usuario de Firebase en un UserProfile local.
+ */
+function toUserProfile(firebaseUser: FirebaseUser): UserProfile {
+  return {
+    uid: firebaseUser.uid,
+    email: firebaseUser.email || "",
+    displayName: firebaseUser.displayName || "Usuario"
+  };
+}
 
 /**
  * Servicio de Autenticación y Contexto de Usuario para BeeKeep.
- * Permite identificar al apicultor actual y garantizar el aislamiento de datos (multi-tenancy)
- * con persistencia garantizada en modo Offline-First.
+ * Utiliza Firebase Authentication para identificar al apicultor actual
+ * y garantizar el aislamiento de datos (multi-tenancy).
  */
 export class AuthService {
-  private currentUser: UserProfile;
+  private currentUser: UserProfile | null = null;
 
   constructor() {
-    this.currentUser = this.loadStoredUser();
+    this.listenForAuthChanges();
   }
 
-  private loadStoredUser(): UserProfile {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      return JSON.parse(stored) as UserProfile;
-    }
-    this.saveStoredUser(DEFAULT_USER);
-    return DEFAULT_USER;
+  /**
+   * Inicia sesión con email y contraseña.
+   */
+  public async login(email: string, password: string): Promise<UserProfile> {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const profile = toUserProfile(userCredential.user);
+    this.currentUser = profile;
+    return profile;
   }
 
-  private saveStoredUser(user: UserProfile): void {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+  /**
+   * Registra un nuevo usuario con email y contraseña.
+   */
+  public async register(email: string, password: string): Promise<UserProfile> {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const profile = toUserProfile(userCredential.user);
+    this.currentUser = profile;
+    return profile;
   }
 
-  public getCurrentUserId(): string {
-    return this.currentUser.uid;
+  /**
+   * Cierra la sesión del usuario actual.
+   */
+  public async logout(): Promise<void> {
+    await signOut(auth);
+    this.currentUser = null;
   }
+
+  /**
+   * Retorna el ID del usuario actual o null si no hay sesión.
+   */
+  public getCurrentUserId(): string | null {
+    return this.currentUser?.uid || null;
+  }
+
+  /**
+   * Retorna el perfil completo del usuario actual o null si no hay sesión.
+   */
+  public getCurrentUser(): UserProfile | null {
+    return this.currentUser;
+  }
+
+  /**
+   * Indica si hay un usuario autenticado.
+   */
+  public isAuthenticated(): boolean {
+    return this.currentUser !== null;
+  }
+
+  /**
+   * Escucha los cambios de autenticación de Firebase.
+   */
+  private listenForAuthChanges(): void {
+    onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
+      if (firebaseUser) {
+        this.currentUser = toUserProfile(firebaseUser);
+      } else {
+        this.currentUser = null;
+      }
+    });
+  }
+
 
 }
 

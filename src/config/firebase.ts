@@ -1,5 +1,9 @@
 import { initializeApp, type FirebaseApp } from "firebase/app";
 import {
+  getAuth,
+  type Auth
+} from "firebase/auth";
+import {
   initializeFirestore,
   persistentLocalCache,
   persistentMultipleTabManager,
@@ -37,3 +41,5 @@ try {
 }
 
 export const db: Firestore = firestoreInstance;
+
+export const auth: Auth = getAuth(app);

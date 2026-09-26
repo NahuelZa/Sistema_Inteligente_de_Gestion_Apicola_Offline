@@ -56,6 +56,9 @@ export class FirestoreService<T extends DocumentData = DocumentData> {
   public async create(data: WithFieldValue<Omit<T, "id">>): Promise<string> {
     const colRef = this.getCollectionRef();
     const currentUserId = authService.getCurrentUserId();
+    if (!currentUserId) {
+      throw new Error("No hay usuario autenticado. Inicia sesión para crear documentos.");
+    }
     const payload: DocumentData = {
       ...(data as DocumentData),
       userId: (data as any).userId || currentUserId,
@@ -83,6 +86,10 @@ export class FirestoreService<T extends DocumentData = DocumentData> {
   public async getAll(userId?: string): Promise<DocumentWithId<T>[]> {
     const colRef = this.getCollectionRef();
     const targetUserId = userId || authService.getCurrentUserId();
+
+    if (!targetUserId) {
+      throw new Error(`No se puede obtener "${this.collectionName}"`);
+    }
 
     const createdQuery = targetUserId
       ? query(colRef, where("userId", "==", targetUserId))

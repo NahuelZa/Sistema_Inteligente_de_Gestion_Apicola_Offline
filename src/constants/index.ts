@@ -1,4 +1,5 @@
 export const VIEWS = {
+  LOGIN: "login",
   APIARIO: "apiario",
   COLMENA: "colmena",
   INSPECCION: "inspeccion",
@@ -12,6 +13,7 @@ export type ViewType = (typeof VIEWS)[keyof typeof VIEWS];
 
 export const ROUTES = {
   HOME: "/",
+  LOGIN: "/login",
   APIARIO: "/apiario",
   COLMENA: "/colmena",
   INSPECCION: "/inspeccion",
