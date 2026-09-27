@@ -1,8 +1,6 @@
 import { initializeApp, type FirebaseApp } from "firebase/app";
 import {
   getAuth,
-  setPersistence,
-  browserLocalPersistence,
   type Auth
 } from "firebase/auth";
 import {
@@ -45,4 +43,3 @@ try {
 export const db: Firestore = firestoreInstance;
 
 export const auth: Auth = getAuth(app);
-
