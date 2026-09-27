@@ -1,4 +1,4 @@
-import {html, LitElement} from "lit";
+import {html, LitElement, nothing} from "lit";
 import {Router} from "@lit-labs/router";
 import "@awesome.me/webawesome/dist/components/page/page.js";
 import "@awesome.me/webawesome/dist/components/icon/icon.js";
@@ -183,30 +183,20 @@ export class AppRouter extends LitElement {
                     <div class="wa-cluster wa-align-items-center wa-justify-content-between"
                          style="width: 100%; padding-top: var(--wa-space-xs);">
                         <h1
-                                class="wa-heading-xl wa-font-weight-bold"
+                                class="wa-cluster wa-heading-xl wa-font-weight-bold"
                                 id="${this.currentView}-view-title"
                                 style="margin: 0; display: flex; align-items: center; gap: var(--wa-space-xs);"
                         >
                             <span>🐝</span>
                             <span>${this.getViewTitle()}</span>
-                            ${this.currentView !== VIEWS.LOGIN ? html`
-                                <wa-button
-                                        variant="neutral"
-                                        appearance="accent"
-                                        size="xs"
-                                        @click=${() => this.handleLogout()}
-                                >
-                                    <wa-icon slot="start" name="arrow-right-from-bracket"></wa-icon>
-                                    Cerrar sesión
-                                </wa-button>
-                            ` : html``}
                         </h1>
 
                         <div id="header-sync-container"
                              style="margin-left: auto; display: flex; align-items: center; gap: var(--wa-space-s);">
                             <sync-indicator></sync-indicator>
-
                         </div>
+                        ${this.loginButton()}
+
                     </div>
                 </header>
                 <main
@@ -215,9 +205,23 @@ export class AppRouter extends LitElement {
                 >
                     ${this.router.outlet()}
                 </main>
-                
+
             </wa-page>
         `;
+    }
+
+    private loginButton() {
+        return this.currentView !== VIEWS.LOGIN ? html`
+            <wa-button
+                    variant="neutral"
+                    appearance="accent"
+                    size="xs"
+                    @click=${() => this.handleLogout()}
+            >
+                <wa-icon slot="start" name="arrow-right-from-bracket"></wa-icon>
+                Cerrar sesión
+            </wa-button>
+        ` : nothing
     }
 
     private getViewTitle() {

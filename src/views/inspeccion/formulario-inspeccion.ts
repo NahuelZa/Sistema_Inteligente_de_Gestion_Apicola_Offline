@@ -208,19 +208,17 @@ export class FormularioInspeccion extends LitElement {
             type="submit"
             variant="brand"
             appearance="accent"
-            size="large"
             class="beekeep-btn-submit"
             ?loading=${this.loading}
           >
             <wa-icon slot="start" name="circle-check"></wa-icon>
-            Guardar inspección
+            Guardar
           </wa-button>
           <wa-button
             id="inspeccion-cancel-btn"
             type="button"
             variant="neutral"
             appearance="outlined"
-            size="large"
             @click=${() => this.navigateToListado()}
           >
             Volver

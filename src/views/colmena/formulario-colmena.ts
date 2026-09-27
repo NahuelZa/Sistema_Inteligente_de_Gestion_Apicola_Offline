@@ -110,7 +110,7 @@ export class FormularioColmena extends LitElement {
         </div>
 
         <div class="form-actions" style="display: flex; gap: var(--wa-space-s);">
-          <wa-button id="colmena-submit-btn" type="submit" variant="brand" appearance="accent" size="large" class="beekeep-btn-submit" ?loading=${this.loading}>
+          <wa-button id="colmena-submit-btn" type="submit" variant="brand" appearance="accent" class="beekeep-btn-submit" ?loading=${this.loading}>
             <wa-icon slot="start" name="circle-check"></wa-icon>
             Guardar
           </wa-button>
@@ -119,7 +119,6 @@ export class FormularioColmena extends LitElement {
             type="button"
             variant="neutral"
             appearance="outlined"
-            size="large"
             @click=${() => this.navigateToListado()}
           >
             Volver

@@ -134,7 +134,6 @@ export class LoginView extends LitElement {
                 type="submit"
                 variant="brand"
                 appearance="accent"
-                size="large"
                 class="beekeep-btn-submit"
                 ?loading=${this.loading}
                 style="width: 100%;"

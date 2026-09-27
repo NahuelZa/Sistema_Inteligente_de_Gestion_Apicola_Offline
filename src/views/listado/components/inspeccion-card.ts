@@ -135,7 +135,6 @@ export class InspeccionCard extends LitElement {
                         variant="danger"
                         appearance="filled"
                         size="small"
-                        size="small"
                         ?loading=${this.deleting}
                         @click=${this.handleDelete}
                 >
