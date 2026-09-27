@@ -1,5 +1,5 @@
 import {LitElement, html} from "lit";
-import {customElement, state} from "lit/decorators.js";
+import {customElement, property} from "lit/decorators.js";
 import {VIEWS, type ViewType} from "../../constants";
 import "@awesome.me/webawesome/dist/components/tab-group/tab-group.js";
 import "@awesome.me/webawesome/dist/components/tab/tab.js";
@@ -13,7 +13,9 @@ import "../listado/listado-view";
  */
 @customElement("home-view")
 export class HomeView extends LitElement {
-    @state() private currentView: ViewType = VIEWS.LISTADO_APIARIOS;
+
+    @property({type: String})
+    private currentView: ViewType = VIEWS.LISTADO_APIARIOS;
 
     override createRenderRoot() {
         return this;
@@ -36,7 +38,6 @@ export class HomeView extends LitElement {
                         panel=${VIEWS.LISTADO_APIARIOS}
                         id="tab-apiarios"
                         class="wa-font-weight-semibold"
-                        ?active=${this.currentView === VIEWS.LISTADO_APIARIOS}
                 >
                     <wa-icon name="cubes-stacked" style="margin-right: var(--wa-space-xs);"></wa-icon>
                     <span>Apiarios</span>
@@ -46,7 +47,6 @@ export class HomeView extends LitElement {
                         panel=${VIEWS.LISTADO_COLMENAS}
                         id="tab-colmenas"
                         class="wa-font-weight-semibold"
-                        ?active=${this.currentView === VIEWS.LISTADO_COLMENAS}
                 >
                     <wa-icon name="cube" style="margin-right: var(--wa-space-xs);"></wa-icon>
                     <span>Colmenas</span>
@@ -56,7 +56,6 @@ export class HomeView extends LitElement {
                         panel=${VIEWS.LISTADO_INSPECCIONES}
                         id="tab-inspecciones"
                         class="wa-font-weight-semibold"
-                        ?active=${this.currentView === VIEWS.LISTADO_INSPECCIONES}
                 >
                     <wa-icon name="clipboard-check" style="margin-right: var(--wa-space-xs);"></wa-icon>
                     <span>Inspecciones</span>

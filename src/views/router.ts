@@ -103,25 +103,25 @@ export class AppRouter extends LitElement {
         {
             path: ROUTES.LISTADO_APIARIOS,
             render: () => html`
-                <listado-view type="apiarios"></listado-view>`,
+                <home-view current-view="apiarios"></home-view>`,
             enter: () => this.requireAuth(() => this.setView(VIEWS.LISTADO_APIARIOS)),
         },
         {
             path: ROUTES.LISTADO_COLMENAS,
             render: () => html`
-                <listado-view type="colmenas"></listado-view>`,
+                <home-view current-view="colmenas"></home-view>`,
             enter: () => this.requireAuth(() => this.setView(VIEWS.LISTADO_COLMENAS)),
         },
         {
             path: ROUTES.LISTADO_INSPECCIONES,
             render: () => html`
-                <listado-view type="inspecciones"></listado-view>`,
+                <home-view current-view="inspecciones"></home-view>`,
             enter: () => this.requireAuth(() => this.setView(VIEWS.LISTADO_INSPECCIONES)),
         },
         {
             path: ROUTES.LISTADO,
             render: () => html`
-                <listado-view type="apiarios"></listado-view>`,
+                <home-view current-view="apiarios"></home-view>`,
             enter: () => this.requireAuth(() => this.setView(VIEWS.LISTADO_APIARIOS)),
         },
     ]);
