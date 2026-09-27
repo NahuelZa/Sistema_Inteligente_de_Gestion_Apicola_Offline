@@ -32,8 +32,11 @@ export class FormularioInspeccion extends LitElement {
   }
 
   private getApiarioName(apiarioId: string): string {
-    return this.apiarios.find((a) => a.id === apiarioId)!.nombre;
+    const apiario = this.apiarios.find((a) => a.id === apiarioId);
+    return apiario ? apiario.nombre : 'Sin apiario';
   }
+
+
 
   private async handleSubmit(event: Event): Promise<void> {
     event.preventDefault();
