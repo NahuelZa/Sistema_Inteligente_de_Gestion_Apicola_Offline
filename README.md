@@ -168,8 +168,9 @@ src/
 
 ## Evidencia de relevamiento con apicultores
 
-* [Formulario de relevamiento a apicultores](https://docs.google.com/forms/d/e/1FAIpQLSds-cLkzPEx7Y86qqiad93ePcFN_daxRs22aKVx5fS2SjdboQ/viewform?usp=dialog)
+* [Formulario de relevamiento a apicultores](https://docs.google.com/forms/d/1xMY1ZjX52rKhWwH8b3Tt5G8z5Sc_yGOnQt_I5-IQQs4/edit#responses)
 
+![encuesta.png](encuesta.png)
 ---
 ## 👥 Integrantes del Equipo
 
