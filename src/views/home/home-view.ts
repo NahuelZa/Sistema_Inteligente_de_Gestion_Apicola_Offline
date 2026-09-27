@@ -14,7 +14,7 @@ import "../listado/listado-view";
 @customElement("home-view")
 export class HomeView extends LitElement {
 
-    @property({type: String})
+    @property({type: String, attribute: "current-view"})
     private currentView: ViewType = VIEWS.LISTADO_APIARIOS;
 
     override createRenderRoot() {
