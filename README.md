@@ -10,16 +10,15 @@ A diferencia de los registros tradicionales en papel que se deterioran o pierden
 
 ---
 
-## 🎯 Alcance y Decisiones de Arquitectura
+## 🎯 Características Principales
 
-A partir del análisis de requerimientos del dominio y las validaciones de arquitectura:
-
-1. **Modelo Operativo Mono-Dispositivo**: Para la fase inicial, cada apicultor opera con un único dispositivo en campo por cuenta de usuario. Esto simplifica la sincronización evitando complejidades de concurrencia distribuida innecesarias.
-2. **Diseño Inmutable / Append-Only**: Las inspecciones y los traslados de colmenas se registran como eventos históricos fechados con identificador único (UUID local). No se sobreescribe información pasada, lo que elimina condiciones de carrera y preserva la trazabilidad.
-3. **Rol de los UUIDs**: Los identificadores generados localmente garantizan unicidad e idempotencia. Cada registro local posee una clave unívoca antes de llegar a la nube, asegurando que ante reintentos de red no se dupliquen documentos en la base central.
-4. **Propiedad de Datos y Seguridad**: Cada apiario, colmena e inspección está asociado a un `userId`. Las consultas y reglas de seguridad aíslan completamente los datos y coordenadas geográficas de cada apicultor.
-5. **Estandarización del Dominio**: Se adopta formalmente la terminología **Apiario** (descartando "lote") y **Colmena**.
-6. **Entrada de Datos en Campo**: La búsqueda e ingreso manual por código visible de colmena es el mecanismo principal garantizado. El escaneo QR y el reconocimiento de voz se mantienen como complementos modulares (P1).
+*   **Gestión de Apiarios**: Visualización clara del inventario de terrenos, coordenadas GPS y el conteo de colmenas activas calculado en tiempo real.
+*   **Arquitectura Offline-First**: Registro de inspecciones y traslados en el campo 100% sin internet utilizando bases de datos locales y UUIDs para evitar conflictos de sincronización.
+*   **Identificación por Códigos QR**: Escaneo rápido de la colmena mediante la cámara del teléfono para abrir instantáneamente su historial médico y productivo. (**POR REALIZAR**)
+*   **Propiedad de Datos y Seguridad**: Cada apiario, colmena e inspección está asociado a un `userId`. Las consultas y reglas de seguridad aíslan completamente los datos y coordenadas geográficas de cada apicultor.
+*   **Historial de traslados**: Registro de traslados para rastrear cuándo y por qué una colmena fue trasladada de un apiario a otro. (**POR REALIZAR**)
+* **Estandarización del Dominio**: Se adopta formalmente la terminología **Apiario** (descartando "lote"), **Colmena**,  **Inspección** y  **Traslado**.
+*   **Inspecciones Manos Libres**: Interfaz optimizada con botones de gran tamaño e integración de dictado por voz (Speech-to-Text) para operar cómodamente usando guantes de protección. (**POR REALIZAR**
 
 ---
 
@@ -66,7 +65,7 @@ erDiagram
     USUARIOS ||--o{ INSPECCIONES : "registra"
     APIARIOS ||--o{ COLMENAS : "contiene"
     COLMENAS ||--o{ INSPECCIONES : "recibe"
-    COLMENAS ||--o{ HISTORIAL_MOVIMIENTOS : "registra"
+    COLMENAS ||--o{ HISTORIAL_TRASLADOS : "registra"
 
     USUARIOS {
         string uid PK
@@ -109,7 +108,7 @@ erDiagram
         string createdAtLocal
     }
 
-    HISTORIAL_MOVIMIENTOS {
+    HISTORIAL_TRASLADOS {
         string id PK
         string userId FK
         string colmenaId FK
@@ -167,6 +166,11 @@ src/
 
 ---
 
+## Evidencia de relevamiento con apicultores
+
+* [Formulario de relevamiento a apicultores](https://docs.google.com/forms/d/e/1FAIpQLSds-cLkzPEx7Y86qqiad93ePcFN_daxRs22aKVx5fS2SjdboQ/viewform?usp=dialog)
+
+---
 ## 👥 Integrantes del Equipo
 
 *   **Nahuel Urciuolli Zabala** — GitHub: [@NahuelZa](https://github.com/NahuelZa)
