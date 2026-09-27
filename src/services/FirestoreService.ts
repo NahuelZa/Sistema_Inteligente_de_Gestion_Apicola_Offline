@@ -4,7 +4,6 @@ import {
   addDoc,
   deleteDoc,
   onSnapshot,
-  onSnapshotsInSync,
   serverTimestamp,
   query,
   where,
