@@ -1,6 +1,7 @@
 import {LitElement, html} from "lit";
 import {customElement, property} from "lit/decorators.js";
-import {VIEWS, type ViewType} from "../../constants";
+import {VIEWS, ROUTES, type ViewType} from "../../constants";
+import {dispatchNavigate} from "../../utils";
 import "@awesome.me/webawesome/dist/components/tab-group/tab-group.js";
 import "@awesome.me/webawesome/dist/components/tab/tab.js";
 import "@awesome.me/webawesome/dist/components/tab-panel/tab-panel.js";
@@ -22,7 +23,21 @@ export class HomeView extends LitElement {
     }
 
     private handleTabShow(e: CustomEvent<{ name: string }>) {
-        this.currentView = e.detail.name as ViewType;
+        const viewName = e.detail.name as ViewType;
+        this.currentView = viewName;
+        
+        // Navigate to the corresponding route
+        switch (viewName) {
+            case VIEWS.LISTADO_APIARIOS:
+                dispatchNavigate(this, ROUTES.LISTADO_APIARIOS);
+                break;
+            case VIEWS.LISTADO_COLMENAS:
+                dispatchNavigate(this, ROUTES.LISTADO_COLMENAS);
+                break;
+            case VIEWS.LISTADO_INSPECCIONES:
+                dispatchNavigate(this, ROUTES.LISTADO_INSPECCIONES);
+                break;
+        }
     }
 
     override render() {
