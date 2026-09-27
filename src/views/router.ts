@@ -209,10 +209,13 @@ export class AppRouter extends LitElement {
                         </div>
                     </div>
                 </header>
-              
-                ${this.router.outlet()}
-
-
+                <main
+                        class="wa-stack"
+                        style="padding: var(--wa-space-xl) var(--wa-space-l); width: 100%; flex: 1;"
+                >
+                    ${this.router.outlet()}
+                </main>
+                
             </wa-page>
         `;
     }

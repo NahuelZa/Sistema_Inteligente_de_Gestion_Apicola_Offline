@@ -1,6 +1,6 @@
 import { nothing, type ReactiveController, type ReactiveControllerHost } from "lit";
-import {doc, type DocumentData, type WithFieldValue} from "firebase/firestore";
-import type { FirestoreService, DocumentWithId } from "../services/FirestoreService";
+import {type DocumentData, type WithFieldValue} from "firebase/firestore";
+import type { FirestoreService, DocumentWithId } from "../services";
 
 export type TaskStatus = "initial" | "pending" | "complete" | "error";
 

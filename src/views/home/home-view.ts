@@ -27,7 +27,7 @@ export class HomeView extends LitElement {
 
     override render() {
         return html`
-            <wa-tab-group
+            <wa-tab-group 
                 id="view-switcher"
                 active=${this.currentView}
                 @wa-tab-show=${this.handleTabShow}
