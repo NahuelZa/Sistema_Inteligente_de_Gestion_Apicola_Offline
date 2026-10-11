@@ -1,0 +1,57 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Funciones auxiliares de seguridad y autenticación
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Garantiza que solo el propietario actual puede actualizarlo
+    // y se previene cualquier transferencia ilícita o alteración del titular (userId).
+    function isOwnerForUpdate() {
+      return isOwner(resource.data.userId) && isOwner(request.resource.data.userId);
+    }
+
+    // Reglas para Apiarios
+    match /apiarios/{apiarioId} {
+      allow read: if isOwner(resource.data.userId);
+      allow create: if isOwner(request.resource.data.userId);
+      allow update: if isOwnerForUpdate();
+      allow delete: if isOwner(resource.data.userId);
+    }
+
+    // Reglas para Colmenas
+    match /colmenas/{colmenaId} {
+      allow read: if isOwner(resource.data.userId);
+      allow create: if isOwner(request.resource.data.userId);
+      allow update: if isOwnerForUpdate();
+      allow delete: if isOwner(resource.data.userId);
+    }
+
+    // Reglas para Inspecciones
+    match /inspecciones/{inspeccionId} {
+      allow read: if isOwner(resource.data.userId);
+      allow create: if isOwner(request.resource.data.userId);
+      allow update: if isOwnerForUpdate();
+      allow delete: if isOwner(resource.data.userId);
+    }
+
+    // Reglas para Historial de Traslados (Inmutable / Append-Only)
+    match /historial_traslados/{trasladoId} {
+      allow read: if isOwner(resource.data.userId);
+      allow create: if isOwner(request.resource.data.userId);
+      allow update, delete: if false;
+    }
+
+    // Bloqueo explícito por defecto para cualquier otra ruta
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

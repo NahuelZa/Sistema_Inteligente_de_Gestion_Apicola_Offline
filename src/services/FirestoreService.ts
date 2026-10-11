@@ -49,19 +49,20 @@ export class FirestoreService<T extends DocumentData = DocumentData> {
   }
 
   /**
-   * Crea un nuevo documento asociándolo automáticamente al usuario actual y con timestamp local.
+   * Crea un nuevo documento asociándolo obligatoriamente al usuario autenticado actual y con timestamp local.
    * @param data Datos del documento a almacenar.
    * @returns Identificador asignado al nuevo documento.
    */
   public async create(data: WithFieldValue<Omit<T, "id">>): Promise<string> {
-    const colRef = this.getCollectionRef();
     const currentUserId = authService.getCurrentUserId();
     if (!currentUserId) {
-      throw new Error("No hay usuario autenticado. Inicia sesión para crear documentos.");
+      throw new Error("Operación rechazada: Usuario no autenticado.");
     }
+
+    const colRef = this.getCollectionRef();
     const payload: DocumentData = {
       ...(data as DocumentData),
-      userId: (data as any).userId || currentUserId,
+      userId: currentUserId,
       createdAtLocal: (data as any).createdAtLocal || new Date().toISOString()
     };
 
@@ -70,10 +71,15 @@ export class FirestoreService<T extends DocumentData = DocumentData> {
   }
 
   /**
-   * Elimina un documento específico por su ID.
+   * Elimina un documento específico por su ID asegurando que el usuario esté autenticado.
    * @param id Identificador del documento a eliminar.
    */
   public async delete(id: string): Promise<void> {
+    const currentUserId = authService.getCurrentUserId();
+    if (!currentUserId) {
+      throw new Error("Operación rechazada: Usuario no autenticado.");
+    }
+
     const docRef = this.getDocRef(id);
     await deleteDoc(docRef);
   }
@@ -103,7 +109,7 @@ export class FirestoreService<T extends DocumentData = DocumentData> {
   public async getAll(userId?: string): Promise<DocumentWithId<T>[]> {
     const targetUserId = userId || authService.getCurrentUserId();
     if (!targetUserId) {
-      throw new Error(`No se puede obtener "${this.collectionName}"`);
+      throw new Error(`Operación rechazada: No se puede obtener "${this.collectionName}" sin usuario autenticado.`);
     }
 
     const colRef = this.getCollectionRef();

@@ -15,8 +15,8 @@ A diferencia de los registros tradicionales en papel que se deterioran o pierden
 *   **Gestión de Apiarios**: Visualización clara del inventario de terrenos, coordenadas GPS y el conteo de colmenas activas calculado en tiempo real.
 *   **Arquitectura Offline-First**: Registro de inspecciones y traslados en el campo 100% sin internet utilizando bases de datos locales y UUIDs para evitar conflictos de sincronización.
 *   **Identificación por Códigos QR**: Escaneo rápido de la colmena mediante la cámara del teléfono para abrir instantáneamente su historial médico y productivo. (**POR REALIZAR**)
-*   **Propiedad de Datos y Seguridad**: Cada apiario, colmena e inspección está asociado a un `userId`. Las consultas y reglas de seguridad aíslan completamente los datos y coordenadas geográficas de cada apicultor.
-*   **Historial de traslados**: Registro de traslados para rastrear cuándo y por qué una colmena fue trasladada de un apiario a otro. (**POR REALIZAR**)
+*   **Propiedad de Datos y Seguridad**: Cada apiario, colmena, inspección y traslado está asociado a un `userId`. Las consultas cliente y las reglas de seguridad en servidor (`firestore.rules`) garantizan el aislamiento multi-tenant estricto de los datos y coordenadas geográficas de cada apicultor.
+*   **Historial de traslados**: Registro inmutable (*Append-Only*) de traslados para rastrear cuándo y por qué una colmena fue trasladada de un apiario a otro. (**POR REALIZAR**)
 * **Estandarización del Dominio**: Se adopta formalmente la terminología **Apiario** (descartando "lote"), **Colmena**,  **Inspección** y  **Traslado**.
 * **Inspecciones Manos Libres**: Interfaz optimizada con botones de gran tamaño e integración de dictado por voz (Speech-to-Text) para operar cómodamente usando guantes de protección. (**POR REALIZAR)**
 * **Política de sincronización y conflictos:** Se aplica la política de Cloud Firestore que utiliza sincronización automática en tiempo real y resuelve los conflictos mediante la regla: "Gana la última escritura" (Last-Write-Wins)
@@ -31,6 +31,30 @@ El stack seleccionado minimiza el riesgo de desarrollo, elimina discrepancias de
 *   **Diseño & UI**: [Web Awesome](https://www.webawesome.com/) (Componentes accesibles).
 *   **Persistencia Local y Sincronización**: [Firebase Firestore Web SDK v12](https://firebase.google.com/docs/firestore) con `persistentLocalCache` y `persistentMultipleTabManager` sobre **IndexedDB**.
 *   **Autenticación**: Firebase Auth para identificación y aislamiento por `userId`.
+
+---
+
+## 🔒 Seguridad y Aislamiento
+
+La seguridad y la confidencialidad de los datos de cada apicultor se garantizan en dos capas complementarias:
+
+### 1. Reglas en Servidor (`firestore.rules`)
+- **Aislamiento por usuario:** Cada documento en `apiarios`, `colmenas`, `inspecciones` y `historial_traslados` exige coincidencia estricta entre el campo `userId` y `request.auth.uid`.
+- **Inmutabilidad de traslados:** La colección `historial_traslados` opera bajo el patrón *Append-Only*, rechazando mutaciones (`update`) o eliminaciones (`delete`).
+- **Bloqueo por defecto:** Cualquier colección o ruta no declarada explícitamente tiene denegado el acceso tanto de lectura como de escritura (`allow read, write: if false;`).
+
+### 2. Validación en Capa de Servicios (`FirestoreService.ts`)
+- **Inyección obligatoria de identidad:** Los métodos de persistencia inyectan y sobrescriben obligatoriamente el `userId` obtenido de `authService.getCurrentUserId()`.
+- **Precondiciones de sesión activa:** Cualquier operación es rechazada antes de interactuar con la base de datos si no existe una sesión autenticada válida.
+
+### 🧪 Ejecución de Pruebas de Seguridad
+```bash
+# Ejecutar suite de pruebas unitarias cliente
+npm test
+
+# Ejecutar suite de reglas de seguridad con el emulador local de Firestore
+npm run test:rules
+```
 
 ---
 
