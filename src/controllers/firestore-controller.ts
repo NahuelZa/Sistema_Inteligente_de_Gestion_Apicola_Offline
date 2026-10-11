@@ -1,6 +1,6 @@
 import { nothing, type ReactiveController, type ReactiveControllerHost } from "lit";
 import {type DocumentData, type WithFieldValue} from "firebase/firestore";
-import type { FirestoreService, DocumentWithId } from "../services";
+import {type FirestoreService, type DocumentWithId, authService} from "../services";
 
 export type TaskStatus = "initial" | "pending" | "complete" | "error";
 
@@ -53,6 +53,7 @@ export class FirestoreController<T extends DocumentData = DocumentData> implemen
   }
 
   private async loadAndAddListeners() {
+    await authService.isAuthenticated();
     const data = await this.loadDocuments();
     for (const doc of data) {
       window.addEventListener("online", () => this.service.onSyncDo(doc.id, () => this.loadDocuments()));
