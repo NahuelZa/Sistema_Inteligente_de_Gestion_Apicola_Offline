@@ -104,15 +104,6 @@ export class FirestoreController<T extends DocumentData = DocumentData> implemen
   }
 
   /**
-   * Elimina un documento por su ID y actualiza el estado local de la lista.
-   */
-  public async delete(id: string): Promise<void> {
-    this.service.delete(id);
-    this.value = this.value.filter((item) => item.id !== id);
-    this.host.requestUpdate();
-  }
-
-  /**
    * Crea un nuevo documento en la colección.
    */
   public async create(data: WithFieldValue<Omit<T, "id">>): Promise<string> {

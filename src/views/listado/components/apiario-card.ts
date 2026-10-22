@@ -28,11 +28,14 @@ export class ApiarioCard extends LitElement {
     override render() {
         if (!this.apiario) return nothing;
 
+        const esInactivo = this.apiario.estado === 'inactivo';
+
         return html`
         <wa-card id="card-apiario-${this.apiario.id}">
             <div slot="header" class="wa-cluster wa-gap-xs wa-align-items-center">
                 <wa-icon name="cubes-stacked" style="color: var(--wa-color-brand); font-size: 1.15rem;"></wa-icon>
                 <strong class="wa-heading-s">${this.apiario.nombre}</strong>
+                ${esInactivo ? html`<wa-badge variant="danger" appearance="accent" size="small">Inactivo</wa-badge>` : nothing}
             </div>
             <div slot="header-actions">
                 <document-sync-status .documento=${this.apiario}></document-sync-status>
@@ -69,7 +72,7 @@ export class ApiarioCard extends LitElement {
                     @click=${this.handleDelete}
             >
                 <wa-icon slot="start" name="trash"></wa-icon>
-                Eliminar
+                ${esInactivo ? 'Activar' : 'Inactivar'}
             </wa-button>
         </wa-card>
     `;

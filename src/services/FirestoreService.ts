@@ -2,7 +2,7 @@ import {
   collection,
   doc,
   addDoc,
-  deleteDoc,
+  updateDoc,
   onSnapshot,
   serverTimestamp,
   query,
@@ -89,18 +89,19 @@ export class FirestoreService<T extends DocumentData = DocumentData> {
   }
 
   /**
-   * Elimina un documento específico por su ID asegurando que el usuario esté autenticado.
-   * @param id Identificador del documento a eliminar.
+   * Actualiza parcialmente un documento específico por su ID asegurando que el usuario esté autenticado.
+   * @param id Identificador del documento a actualizar.
+   * @param data Campos a actualizar en el documento.
    */
   @FirestoreService.withTimeout(3_000)
-  public async delete(id: string): Promise<void> {
+  public async update(id: string, data: Partial<T>): Promise<void> {
     const currentUserId = authService.getCurrentUserId();
     if (!currentUserId) {
       throw new Error("Operación rechazada: Usuario no autenticado.");
     }
 
     const docRef = this.getDocRef(id);
-    await deleteDoc(docRef);
+    await updateDoc(docRef, data as DocumentData);
   }
 
   public onSyncDo(id: string, callback: () => void) {

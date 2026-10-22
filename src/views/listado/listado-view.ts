@@ -11,6 +11,7 @@ import "@awesome.me/webawesome/dist/components/card/card.js";
 import "@awesome.me/webawesome/dist/components/button/button.js";
 import "@awesome.me/webawesome/dist/components/icon/icon.js";
 import "@awesome.me/webawesome/dist/components/badge/badge.js";
+import "@awesome.me/webawesome/dist/components/checkbox/checkbox.js";
 import "./components/apiario-card";
 import "./components/colmena-card";
 import "./components/inspeccion-card";
@@ -23,6 +24,7 @@ export class ListadoView extends LitElement {
   @property({ type: String }) type: "apiarios" | "colmenas" | "inspecciones" = "apiarios";
 
   @state() private deletingId: string | null = null;
+  @state() private mostrarInactivos = false;
 
   private feedback = new FeedbackController(this);
 
@@ -66,55 +68,74 @@ export class ListadoView extends LitElement {
     }
   }
 
-  private async handleDeleteApiario(apiario: DocumentWithId<Apiario>): Promise<void> {
-    const confirmDelete = window.confirm(
-      `¿Estás seguro de eliminar el apiario "${apiario.nombre}"?`
+  // TO-DO: remover código duplicado entre handleInactivar**** y  render***Tab
+  private async handleInactivarApiario(apiario: DocumentWithId<Apiario>): Promise<void> {
+    const confirmAction = window.confirm(
+      apiario.estado === 'inactivo'
+        ? `¿Estás seguro de reactivar el apiario "${apiario.nombre}"?`
+        : `¿Estás seguro de dar de baja el apiario "${apiario.nombre}"? Las colmenas e inspecciones asociadas se preservarán.`
     );
-    if (!confirmDelete) return;
+    if (!confirmAction) return;
 
     try {
       this.deletingId = apiario.id;
-      await this.apiariosTask.delete(apiario.id);
-      this.feedback.show(`Apiario "${apiario.nombre}" eliminado correctamente.`, "success");
+      const esReactivacion = apiario.estado === 'inactivo';
+      if (esReactivacion) {
+        await apiarioService.reactivar(apiario.id);
+      } else {
+        await apiarioService.inactivar(apiario.id);
+      }
+      await this.apiariosTask.loadDocuments();
+      this.feedback.show(
+        `Apiario "${apiario.nombre}" ${esReactivacion ? 'reactivado' : 'dado de baja'} correctamente.`,
+        "success"
+      );
     } catch (error) {
-      console.error("Error al eliminar apiario:", error);
-      this.feedback.show("No se pudo eliminar el apiario. Intenta nuevamente.", "danger");
+      console.error("Error al modificar estado del apiario:", error);
+      this.feedback.show("No se pudo modificar el estado del apiario. Intenta nuevamente.", "danger");
     } finally {
       this.deletingId = null;
     }
   }
 
-  private async handleDeleteColmena(colmena: DocumentWithId<Colmena>): Promise<void> {
-    const confirmDelete = window.confirm(
-      `¿Estás seguro de eliminar la colmena "${colmena.numeroColmena}"?`
+  private async handleInactivarColmena(colmena: DocumentWithId<Colmena>): Promise<void> {
+    const confirmAction = window.confirm(
+      colmena.estado === 'inactiva'
+        ? `¿Estás seguro de reactivar la colmena "${colmena.numeroColmena}"?`
+        : `¿Estás seguro de dar de baja la colmena "${colmena.numeroColmena}"? Las inspecciones históricas se preservarán.`
     );
-    if (!confirmDelete) return;
+    if (!confirmAction) return;
 
     try {
       this.deletingId = colmena.id;
-      await this.colmenasTask.delete(colmena.id);
-      this.feedback.show(`Colmena "${colmena.numeroColmena}" eliminada correctamente.`, "success");
+      const esReactivacion = colmena.estado === 'inactiva';
+      if (esReactivacion) {
+        await colmenaService.reactivar(colmena.id);
+      } else {
+        await colmenaService.inactivar(colmena.id);
+      }
+      await this.colmenasTask.loadDocuments();
+      this.feedback.show(
+        `Colmena "${colmena.numeroColmena}" ${esReactivacion ? 'reactivada' : 'dada de baja'} correctamente.`,
+        "success"
+      );
     } catch (error) {
-      console.error("Error al eliminar colmena:", error);
-      this.feedback.show("No se pudo eliminar la colmena. Intenta nuevamente.", "danger");
+      console.error("Error al modificar estado de la colmena:", error);
+      this.feedback.show("No se pudo modificar el estado de la colmena. Intenta nuevamente.", "danger");
     } finally {
       this.deletingId = null;
     }
   }
 
-  private async handleDeleteInspeccion(inspeccion: DocumentWithId<Inspeccion>): Promise<void> {
-    const confirmDelete = window.confirm(
-      `¿Estás seguro de eliminar este registro de inspección?`
-    );
-    if (!confirmDelete) return;
-
+  private async handleAnularInspeccion(inspeccion: DocumentWithId<Inspeccion>, motivo: string): Promise<void> {
     try {
       this.deletingId = inspeccion.id;
-      await this.inspeccionesTask.delete(inspeccion.id);
-      this.feedback.show("Inspección eliminada correctamente.", "success");
+      await inspeccionService.anularInspeccion(inspeccion.id, motivo);
+      await this.inspeccionesTask.loadDocuments();
+      this.feedback.show("Inspección anulada correctamente. El registro histórico se preservó.", "success");
     } catch (error) {
-      console.error("Error al eliminar inspección:", error);
-      this.feedback.show("No se pudo eliminar la inspección. Intenta nuevamente.", "danger");
+      console.error("Error al anular inspección:", error);
+      this.feedback.show("No se pudo anular la inspección. Intenta nuevamente.", "danger");
     } finally {
       this.deletingId = null;
     }
@@ -144,6 +165,7 @@ export class ListadoView extends LitElement {
         </wa-card>
       `,
       complete: (apiarios) => {
+        const filtrados = this.mostrarInactivos ? apiarios : apiarios.filter((a) => a.estado !== 'inactivo');
         if (apiarios.length === 0) {
           return html`
             <wa-card appearance="filled-outlined">
@@ -163,7 +185,15 @@ export class ListadoView extends LitElement {
         }
 
         return html`
-          <div class="wa-cluster wa-justify-content-end wa-align-items-center">
+          <div class="wa-split wa-align-items-center">
+            <wa-checkbox
+              hint="Incluye apiarios dados de baja"
+              ?checked=${this.mostrarInactivos}
+              @change=${(e: Event) => (this.mostrarInactivos = (e.target as HTMLInputElement).checked)}
+            >
+              <wa-icon slot="start" name="eye"></wa-icon>
+              Mostrar inactivos
+            </wa-checkbox>
             <wa-button
               id="btn-nuevo-apiario"
               variant="brand"
@@ -177,15 +207,17 @@ export class ListadoView extends LitElement {
           </div>
 
           <div class="wa-stack wa-gap-m">
-            ${apiarios.map(
-              (apiario) => html`
-                <apiario-card
-                  .apiario=${apiario}
-                  .deleting=${this.deletingId === apiario.id}
-                  @delete=${() => this.handleDeleteApiario(apiario)}
-                ></apiario-card>
-              `
-            )}
+            ${filtrados.length === 0 && !this.mostrarInactivos
+              ? html`<p class="wa-body-s wa-color-text-quiet" style="text-align: center;">No hay apiarios activos.</p>`
+              : filtrados.map(
+                  (apiario) => html`
+                    <apiario-card
+                      .apiario=${apiario}
+                      .deleting=${this.deletingId === apiario.id}
+                      @delete=${() => this.handleInactivarApiario(apiario)}
+                    ></apiario-card>
+                  `
+                )}
           </div>
         `;
       },
@@ -216,6 +248,7 @@ export class ListadoView extends LitElement {
         </wa-card>
       `,
       complete: (colmenas) => {
+        const filtrados = this.mostrarInactivos ? colmenas : colmenas.filter((c) => c.estado !== 'inactiva');
         if (colmenas.length === 0) {
           return html`
             <wa-card appearance="filled-outlined">
@@ -235,7 +268,15 @@ export class ListadoView extends LitElement {
         }
 
         return html`
-          <div class="wa-cluster wa-justify-content-end wa-align-items-center">
+          <div class="wa-split wa-align-items-center">
+            <wa-checkbox
+              hint="Incluye colmenas dadas de baja"
+              ?checked=${this.mostrarInactivos}
+              @change=${(e: Event) => (this.mostrarInactivos = (e.target as HTMLInputElement).checked)}
+            >
+              <wa-icon slot="start" name="eye"></wa-icon>
+              Mostrar inactivas
+            </wa-checkbox>
             <wa-button
               id="btn-nueva-colmena"
               variant="brand"
@@ -249,15 +290,18 @@ export class ListadoView extends LitElement {
           </div>
 
           <div class="wa-stack wa-gap-m">
-            ${colmenas.map(
-              (colmena) => html`
-                <colmena-card
-                  .colmena=${colmena}
-                  .deleting=${this.deletingId === colmena.id}
-                  @delete=${() => this.handleDeleteColmena(colmena)}
-                ></colmena-card>
-              `
-            )}
+            ${filtrados.length === 0 && !this.mostrarInactivos
+              ? html`<p class="wa-body-s wa-color-text-quiet" style="text-align: center;">No hay colmenas activas.</p>`
+              : filtrados.map(
+                  (colmena) => html`
+                    <colmena-card
+                      .colmena=${colmena}
+                      .apiarios=${this.apiariosTask.value}
+                      .deleting=${this.deletingId === colmena.id}
+                      @delete=${() => this.handleInactivarColmena(colmena)}
+                    ></colmena-card>
+                  `
+                )}
           </div>
         `;
       },
@@ -288,6 +332,7 @@ export class ListadoView extends LitElement {
         </wa-card>
       `,
       complete: (inspecciones) => {
+        const filtrados = this.mostrarInactivos ? inspecciones : inspecciones.filter((i) => i.anulada !== true);
         if (inspecciones.length === 0) {
           return html`
             <wa-card appearance="filled-outlined">
@@ -307,7 +352,15 @@ export class ListadoView extends LitElement {
         }
 
         return html`
-          <div class="wa-cluster wa-justify-content-end wa-align-items-center">
+          <div class="wa-split wa-align-items-center">
+            <wa-checkbox
+              hint="Incluye inspecciones anuladas"
+              ?checked=${this.mostrarInactivos}
+              @change=${(e: Event) => (this.mostrarInactivos = (e.target as HTMLInputElement).checked)}
+            >
+              <wa-icon slot="start" name="eye"></wa-icon>
+              Mostrar anuladas
+            </wa-checkbox>
             <wa-button
               id="btn-nueva-inspeccion"
               variant="brand"
@@ -321,17 +374,19 @@ export class ListadoView extends LitElement {
           </div>
 
           <div class="wa-stack wa-gap-m">
-            ${inspecciones.map(
-              (inspeccion) => html`
-                <inspeccion-card
-                  .inspeccion=${inspeccion}
-                  .colmenas=${this.colmenasTask.value}
-                  .apiarios=${this.apiariosTask.value}
-                  .deleting=${this.deletingId === inspeccion.id}
-                  @delete=${() => this.handleDeleteInspeccion(inspeccion)}
-                ></inspeccion-card>
-              `
-            )}
+            ${filtrados.length === 0 && !this.mostrarInactivos
+              ? html`<p class="wa-body-s wa-color-text-quiet" style="text-align: center;">No hay inspecciones activas.</p>`
+              : filtrados.map(
+                  (inspeccion) => html`
+                    <inspeccion-card
+                      .inspeccion=${inspeccion}
+                      .colmenas=${this.colmenasTask.value}
+                      .apiarios=${this.apiariosTask.value}
+                      .deleting=${this.deletingId === inspeccion.id}
+                      @anular=${(e: CustomEvent) => this.handleAnularInspeccion(inspeccion, e.detail.motivo)}
+                    ></inspeccion-card>
+                  `
+                )}
           </div>
         `;
       },

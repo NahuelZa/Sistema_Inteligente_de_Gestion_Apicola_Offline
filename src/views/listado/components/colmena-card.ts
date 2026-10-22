@@ -9,6 +9,7 @@ import type { Colmena } from "../../../models/colmena.model";
 @customElement("colmena-card")
 export class ColmenaCard extends LitElement {
   @property({ type: Object }) colmena!: DocumentWithId<Colmena>;
+  @property({ type: Array }) apiarios: any[] = [];
   @property({ type: Boolean }) deleting = false;
 
   override createRenderRoot() {
@@ -25,18 +26,27 @@ export class ColmenaCard extends LitElement {
     );
   }
 
+  private getApiarioNombre(): string {
+    const apiario = this.apiarios.find((a) => a.id === this.colmena.apiarioId);
+    return apiario ? apiario.nombre : 'Apiario no encontrado';
+  }
+
   override render() {
     if (!this.colmena) return nothing;
+
+    const isInactiva = this.colmena.estado === 'inactiva';
+    const apiarioNombre = this.getApiarioNombre();
 
     return html`
       <wa-card id="card-colmena-${this.colmena.id}">
         <div slot="header" class="wa-cluster wa-gap-xs wa-align-items-center">
           <wa-icon name="cube" style="color: var(--wa-color-brand); font-size: 1.15rem;"></wa-icon>
           <strong class="wa-heading-s">${this.colmena.numeroColmena}</strong>
+          ${isInactiva ? html`<wa-badge variant="danger" appearance="accent" size="small">Inactiva</wa-badge>` : nothing}
         </div>
           <div slot="header-actions">
               <document-sync-status .documento=${this.colmena}></document-sync-status>
-              <wa-badge slot="header-actions" variant="brand" appearance="accent">${this.colmena.apiarioNombre}</wa-badge>
+              <wa-badge slot="header-actions" variant="brand" appearance="accent">${apiarioNombre}</wa-badge>
           </div>
         <div class="wa-stack wa-gap-xs">
           <div class="wa-cluster wa-gap-xs wa-align-items-center wa-body-s wa-color-text-normal">
@@ -62,7 +72,7 @@ export class ColmenaCard extends LitElement {
           @click=${this.handleDelete}
         >
           <wa-icon slot="start" name="trash"></wa-icon>
-          Eliminar
+          ${isInactiva ? 'Activar' : 'Inactivar'}
         </wa-button>
       </wa-card>
     `;

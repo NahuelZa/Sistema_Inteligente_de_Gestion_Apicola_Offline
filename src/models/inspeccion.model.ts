@@ -8,8 +8,11 @@ export interface Inspeccion {
   reinaVista: boolean;
   tienePostura: boolean;
   estadoSanitario: "bueno" | "alerta" | "enferma";
-  enfermedadesDetectadas?: string;
+  enfermedadesDetectadas: string;
   notas?: string;
+  anulada?: boolean;
+  motivoAnulacion?: string;
+  anuladaAt?: string;
   createdAtLocal: string;
   createdAt?: string | any;
 }

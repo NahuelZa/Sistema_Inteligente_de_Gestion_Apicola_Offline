@@ -19,7 +19,8 @@ A diferencia de los registros tradicionales en papel que se deterioran o pierden
 *   **Historial de traslados**: Registro inmutable (*Append-Only*) de traslados para rastrear cuándo y por qué una colmena fue trasladada de un apiario a otro. (**POR REALIZAR**)
 * **Estandarización del Dominio**: Se adopta formalmente la terminología **Apiario** (descartando "lote"), **Colmena**,  **Inspección** y  **Traslado**.
 * **Inspecciones Manos Libres**: Interfaz optimizada con botones de gran tamaño e integración de dictado por voz (Speech-to-Text) para operar cómodamente usando guantes de protección. (**POR REALIZAR)**
-* **Política de sincronización y conflictos:** Se aplica la política de Cloud Firestore que utiliza sincronización automática en tiempo real y resuelve los conflictos mediante la regla: "Gana la última escritura" (Last-Write-Wins)
+* **Política de sincronización y conflictos:** Se formaliza el supuesto de que cada apicultor opera con un único dispositivo móvil principal durante su jornada en campo. La estrategia de resolución de conflictos es *Last-Write-Wins* (LWW) gestionada a nivel de documento por Cloud Firestore en base al timestamp del servidor al reconectar. Los IDs se generan mediante UUID v4 / Firestore Auto-ID antes de guardar para evitar colisiones de clave primaria.
+* **Baja lógica (Soft-Delete):** No se eliminan documentos físicamente de Firestore. Las inspecciones se anulan con motivo, y los apiarios y colmenas se marcan como inactivos/inactivas, preservando la trazabilidad histórica y evitando registros huérfanos.
 
 ---
 
@@ -104,6 +105,7 @@ erDiagram
         string nombre
         string ubicacion
         string notas
+        string estado
         string createdAtLocal
     }
 
@@ -130,6 +132,9 @@ erDiagram
         string estadoSanitario
         string enfermedadesDetectadas
         string notasTexto
+        boolean anulada
+        string motivoAnulacion
+        string anuladaAt
         string createdAtLocal
     }
 

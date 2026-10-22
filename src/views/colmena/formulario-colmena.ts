@@ -39,18 +39,17 @@ export class FormularioColmena extends LitElement {
     const notasTextarea = form.querySelector<any>("#colmena-notas")!;
 
     const apiarioId = apiarioSelect.value.trim();
-    const apiarioNombre = this.apiarios.find((apiario) => apiario.id === apiarioId)?.nombre ?? "";
-    console.log(apiarioNombre);
     const numeroColmena = numeroInput.value.trim();
     const fechaAlta = fechaInput.value.trim();
     const notas = notasTextarea.value.trim();
 
+    const selectedApiario = this.apiarios.find((apiario) => apiario.id === apiarioId);
+    const apiarioNombre = selectedApiario?.nombre ?? "Apiario desconocido";
 
     const userId = authService.getCurrentUserId()!;
     const nuevaColmena: Colmena = {
       userId,
       apiarioId,
-      apiarioNombre,
       numeroColmena,
       fechaAlta,
       estado: "activa",

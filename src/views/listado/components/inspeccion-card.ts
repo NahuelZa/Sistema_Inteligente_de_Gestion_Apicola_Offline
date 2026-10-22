@@ -17,10 +17,13 @@ export class InspeccionCard extends LitElement {
         return this;
     }
 
-    private handleDelete() {
+    private handleAnular() {
+        const motivo = window.prompt("Motivo de la anulación:");
+        if (!motivo || motivo.trim() === "") return;
+
         this.dispatchEvent(
-            new CustomEvent("delete", {
-                detail: {inspeccion: this.inspeccion},
+            new CustomEvent("anular", {
+                detail: {inspeccion: this.inspeccion, motivo: motivo.trim()},
                 bubbles: true,
                 composed: true,
             })
@@ -50,12 +53,14 @@ export class InspeccionCard extends LitElement {
 
         const colmenaLabel = this.getColmenaLabel();
         const notas = this.inspeccion.notas || "";
+        const esAnulada = this.inspeccion.anulada === true;
 
         return html`
             <wa-card id="card-inspeccion-${this.inspeccion.id}">
                 <div slot="header" class="wa-cluster wa-gap-xs wa-align-items-center">
                     <wa-icon name="clipboard-check" style="color: var(--wa-color-brand); font-size: 1.15rem;"></wa-icon>
                     <strong class="wa-heading-s">Inspección - ${colmenaLabel}</strong>
+                    ${esAnulada ? html`<wa-badge variant="danger" appearance="accent" size="small">Anulada</wa-badge>` : nothing}
                 </div>
                 <div slot="header-actions">
                     <document-sync-status .documento=${this.inspeccion}></document-sync-status>
@@ -119,6 +124,15 @@ export class InspeccionCard extends LitElement {
                             `
                             : nothing}
 
+                    ${esAnulada && this.inspeccion.motivoAnulacion
+                            ? html`
+                                <div class="wa-cluster wa-gap-xs wa-align-items-center wa-body-s wa-color-text-quiet">
+                                    <wa-icon name="circle-xmark" class="wa-color-text-quiet"></wa-icon>
+                                    <span><strong>Motivo anulación:</strong> ${this.inspeccion.motivoAnulacion}</span>
+                                </div>
+                            `
+                            : nothing}
+
                     ${notas
                             ? html`
                                 <div class="wa-cluster wa-gap-xs wa-align-items-start wa-body-s wa-color-text-normal">
@@ -136,10 +150,10 @@ export class InspeccionCard extends LitElement {
                         appearance="filled"
                         size="small"
                         ?loading=${this.deleting}
-                        @click=${this.handleDelete}
+                        @click=${this.handleAnular}
                 >
-                    <wa-icon slot="start" name="trash"></wa-icon>
-                    Eliminar
+                    <wa-icon slot="start" name="circle-xmark"></wa-icon>
+                    Anular
                 </wa-button>
             </wa-card>
         `;
