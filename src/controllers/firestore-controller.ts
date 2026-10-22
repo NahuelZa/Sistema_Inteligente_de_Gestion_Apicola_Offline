@@ -1,5 +1,5 @@
 import { nothing, type ReactiveController, type ReactiveControllerHost } from "lit";
-import {type DocumentData, type WithFieldValue} from "firebase/firestore";
+import {type DocumentData, type Unsubscribe, type WithFieldValue} from "firebase/firestore";
 import {type FirestoreService, type DocumentWithId, authService} from "../services";
 
 export type TaskStatus = "initial" | "pending" | "complete" | "error";
@@ -26,6 +26,7 @@ export class FirestoreController<T extends DocumentData = DocumentData> implemen
   private service: FirestoreService<T>;
   private options: FirestoreControllerOptions<T>;
   private currentRunId = 0;
+  private unsubSync: Unsubscribe | null = null;
 
   public status: TaskStatus = "initial";
   public value: DocumentWithId<T>[] = [];
@@ -54,15 +55,18 @@ export class FirestoreController<T extends DocumentData = DocumentData> implemen
 
   private async loadAndAddListeners() {
     await authService.isAuthenticated();
-    const data = await this.loadDocuments();
-    for (const doc of data) {
-      window.addEventListener("online", () => this.service.onSyncDo(doc.id, () => this.loadDocuments()));
+    await this.loadDocuments();
+    const userId = authService.getCurrentUserId();
+    if (userId) {
+      this.unsubSync = this.service.onSynced(userId, () => this.loadDocuments());
     }
   }
 
   hostDisconnected(): void {
     // Invalida cualquier petición asíncrona pendiente para evitar carreras al reconectar
     this.currentRunId++;
+    this.unsubSync?.();
+    this.unsubSync = null;
   }
 
   /**

@@ -99,12 +99,11 @@ export class AuthService {
     onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
         this.currentUser = toUserProfile(firebaseUser);
-        this.userChecked!(true);
+        this.userChecked?.(true);
       } else {
-        this.userChecked!(false);
+        this.userChecked?.(false);
         this.currentUser = null;
       }
-
     });
   }
 

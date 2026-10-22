@@ -57,7 +57,7 @@ export class FormularioInspeccion extends LitElement {
     const reinaVista = reinaCheckbox.checked;
     const tienePostura = posturaCheckbox.checked;
     const estadoSanitario = sanidadSelect.value.trim() as "bueno" | "alerta" | "enferma";
-    const enfermedadesDetectadas = enfermedadesInput?.value?.trim() || "No ingresado";
+    const enfermedadesDetectadas = enfermedadesInput.value?.trim() || "No ingresado";
     const notas = notasTextarea.value.trim();
     const selectedColmena = this.colmenas.find((c) => c.id === colmenaId)!;
     const colmenaNumero = selectedColmena.numeroColmena;
@@ -81,8 +81,14 @@ export class FormularioInspeccion extends LitElement {
 
     try {
       this.loading = true;
-      inspeccionService.create(nuevaInspeccion);
-      this.feedback.show(`¡Inspección para la colmena "${colmenaNumero}" registrada correctamente!`, "success");
+
+      if (navigator.onLine) {
+        await inspeccionService.create(nuevaInspeccion);
+        this.feedback.show(`¡Inspección para la colmena "${colmenaNumero}" registrada y sincronizada con éxito!`, "success");
+      } else {
+        inspeccionService.create(nuevaInspeccion);
+        this.feedback.show("Guardado localmente en el dispositivo. Pendiente de sincronización al recuperar señal.", "warning");
+      }
 
       colmenaSelect.value = "";
       fechaInput.value = this.today;

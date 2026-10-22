@@ -60,8 +60,14 @@ export class FormularioColmena extends LitElement {
 
     try {
       this.loading = true;
-      colmenaService.create(nuevaColmena);
-      this.feedback.show(`¡Colmena "${numeroColmena}" guardada con éxito en ${apiarioNombre}!`, "success");
+
+      if (navigator.onLine) {
+        colmenaService.create(nuevaColmena);
+        this.feedback.show(`¡Colmena "${numeroColmena}" guardada y sincronizada con éxito en ${apiarioNombre}!`, "success");
+      } else {
+        await colmenaService.create(nuevaColmena);
+        this.feedback.show("Guardado localmente en el dispositivo. Pendiente de sincronización al recuperar señal.", "warning");
+      }
 
       apiarioSelect.value = "";
       numeroInput.value = "";

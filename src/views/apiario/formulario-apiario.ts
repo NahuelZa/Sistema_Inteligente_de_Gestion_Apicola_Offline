@@ -43,15 +43,21 @@ export class FormularioApiario extends LitElement {
 
     try {
       this.loading = true;
-      apiarioService.create(nuevoApiario);
-      this.feedback.show(`¡Apiario "${nombre}" creado correctamente!`, "success");
+      // TO-DO: revisar para reutilizar código entre todos los formularios y/o quitar if navigator.onLine
+      if (navigator.onLine) {
+        await apiarioService.create(nuevoApiario);
+        this.feedback.show(`¡Apiario "${nombre}" guardado y sincronizado con éxito!`, "success");
+      } else {
+        apiarioService.create(nuevoApiario);
+        this.feedback.show("Guardado localmente en el dispositivo. Pendiente de sincronización al recuperar señal.", "warning");
+      }
 
       nombreInput.value = "";
       ubicacionInput.value = "";
       descTextarea.value = "";
     } catch (error) {
       console.error("Error al guardar apiario:", error);
-      this.feedback.show("Error al registrar el apiario. Se guardará localmente.", "warning");
+      this.feedback.show("Error al registrar el apiario. Se intentará guardar localmente.", "warning");
     } finally {
       this.loading = false;
     }

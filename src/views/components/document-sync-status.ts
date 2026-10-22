@@ -14,7 +14,7 @@ export class DocumentSyncStatus extends LitElement {
             ${!this.documento.estaSincronizado
                     ? html`
                         <wa-badge variant="neutral" appearance="accent">
-                            Pendiente
+                            No sincronizado
                         </wa-badge>`
                     : nothing
             }
