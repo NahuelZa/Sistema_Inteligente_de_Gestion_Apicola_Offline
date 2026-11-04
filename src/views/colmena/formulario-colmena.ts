@@ -1,11 +1,11 @@
-import { LitElement, html } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
-import { FeedbackController } from "../../controllers";
-import { colmenaService, authService } from "../../services";
-import type { Colmena, Apiario } from "../../models";
-import type { DocumentWithId } from "../../services";
-import { ROUTES } from "../../constants";
-import { dispatchNavigate } from "../../utils";
+import {html, LitElement} from "lit";
+import {customElement, property, state} from "lit/decorators.js";
+import {FeedbackController} from "../../controllers";
+import type {DocumentWithId} from "../../services";
+import {authService, colmenaService} from "../../services";
+import {type Apiario, type Colmena, EstadoModelo} from "../../models";
+import {ROUTES} from "../../constants";
+import {dispatchNavigate} from "../../utils";
 
 /**
  * Vista de Alta de Colmena
@@ -21,6 +21,7 @@ export class FormularioColmena extends LitElement {
     return this;
   }
 
+  // TO-DO: buscar los lugares donde se repita esta función y extraer a un "utils"
   private get today(): string {
     const d = new Date();
     const year = d.getFullYear();
@@ -52,7 +53,7 @@ export class FormularioColmena extends LitElement {
       apiarioId,
       numeroColmena,
       fechaAlta,
-      estado: "activa",
+      estado: EstadoModelo.ACTIVO,
       notas,
       createdAtLocal: new Date().toISOString(),
     };

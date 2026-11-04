@@ -2,6 +2,7 @@ import { LitElement, html, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import type { DocumentWithId } from "../../../services/FirestoreService";
 import type { Colmena } from "../../../models/colmena.model";
+import {EstadoModelo} from "../../../models";
 
 /**
  * Componente para mostrar una tarjeta individual de Colmena.
@@ -26,6 +27,16 @@ export class ColmenaCard extends LitElement {
     );
   }
 
+  private handleTrasladar() {
+    this.dispatchEvent(
+      new CustomEvent("trasladar", {
+        detail: { colmenaId: this.colmena.id },
+        bubbles: true,
+        composed: true,
+      })
+    );
+  }
+
   private getApiarioNombre(): string {
     const apiario = this.apiarios.find((a) => a.id === this.colmena.apiarioId);
     return apiario ? apiario.nombre : 'Apiario no encontrado';
@@ -34,7 +45,7 @@ export class ColmenaCard extends LitElement {
   override render() {
     if (!this.colmena) return nothing;
 
-    const isInactiva = this.colmena.estado === 'inactiva';
+    const isInactiva = this.colmena.estado === EstadoModelo.INACTIVO;
     const apiarioNombre = this.getApiarioNombre();
 
     return html`
@@ -63,17 +74,27 @@ export class ColmenaCard extends LitElement {
             : nothing}
         </div>
 
-        <wa-button
-          slot="footer"
-          variant="danger"
-          appearance="filled"
-          size="small"
-          ?loading=${this.deleting}
-          @click=${this.handleDelete}
-        >
-          <wa-icon slot="start" name="trash"></wa-icon>
-          ${isInactiva ? 'Activar' : 'Inactivar'}
-        </wa-button>
+        <div slot="footer" class="wa-cluster" style="gap: var(--wa-space-xs);">
+          <wa-button
+            variant="brand"
+            appearance="filled"
+            size="small"
+            @click=${this.handleTrasladar}
+          >
+            <wa-icon slot="start" name="truck"></wa-icon>
+            Trasladar
+          </wa-button>
+          <wa-button
+            variant="danger"
+            appearance="filled"
+            size="small"
+            ?loading=${this.deleting}
+            @click=${this.handleDelete}
+          >
+            <wa-icon slot="start" name="trash"></wa-icon>
+            ${isInactiva ? 'Activar' : 'Inactivar'}
+          </wa-button>
+        </div>
       </wa-card>
     `;
   }

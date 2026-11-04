@@ -16,6 +16,7 @@ import {
 } from "firebase/firestore";
 import { db as defaultDb } from "../config/firebase";
 import { authService } from "./auth.service";
+import {EstadoModelo} from "../models";
 
 export type DocumentWithId<T> = T & { id: string, estaSincronizado?: boolean };
 
@@ -153,6 +154,11 @@ export class FirestoreService<T extends DocumentData = DocumentData> {
           reject
       );
     });
+  }
+
+  public async getAllActivos(userId?: string): Promise<DocumentWithId<T>[]> {
+    const todos = await this.getAll(userId);
+    return todos.filter(each => each.estado === EstadoModelo.ACTIVO);
   }
 
   /**

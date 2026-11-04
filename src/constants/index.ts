@@ -3,6 +3,7 @@ export const VIEWS = {
   APIARIO: "apiario",
   COLMENA: "colmena",
   INSPECCION: "inspeccion",
+  TRASLADO: "traslado",
   LISTADO_APIARIOS: "apiarios",
   LISTADO_COLMENAS: "colmenas",
   LISTADO_INSPECCIONES: "inspecciones",
@@ -18,6 +19,7 @@ export const ROUTES = {
   COLMENA: "/colmena",
   INSPECCION: "/inspeccion",
   NUEVA_INSPECCION: "/nueva-inspeccion",
+  TRASLADO: "/traslado",
   COLMENAS: "/colmenas",
   APIARIOS: "/apiarios",
   INSPECCIONES: "/inspecciones",
@@ -31,4 +33,5 @@ export const COLLECTIONS = {
   APIARIOS: "apiarios",
   COLMENAS: "colmenas",
   INSPECCIONES: "inspecciones",
+  HISTORIAL_TRASLADOS: "historial_traslados",
 } as const;

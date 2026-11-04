@@ -1,11 +1,11 @@
-import { LitElement, html } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
-import { FeedbackController, FirestoreController } from "../../controllers";
-import { apiarioService, colmenaService, inspeccionService } from "../../services";
-import type { DocumentWithId } from "../../services";
-import type { Apiario, Colmena, Inspeccion } from "../../models";
-import { ROUTES } from "../../constants";
-import { dispatchNavigate } from "../../utils";
+import {html, LitElement} from "lit";
+import {customElement, property, state} from "lit/decorators.js";
+import {FeedbackController, FirestoreController} from "../../controllers";
+import type {DocumentWithId} from "../../services";
+import {apiarioService, colmenaService, inspeccionService} from "../../services";
+import {type Apiario, type Colmena, EstadoModelo, type Inspeccion} from "../../models";
+import {ROUTES} from "../../constants";
+import {dispatchNavigate} from "../../utils";
 import "@awesome.me/webawesome/dist/components/spinner/spinner.js";
 import "@awesome.me/webawesome/dist/components/card/card.js";
 import "@awesome.me/webawesome/dist/components/button/button.js";
@@ -100,7 +100,7 @@ export class ListadoView extends LitElement {
 
   private async handleInactivarColmena(colmena: DocumentWithId<Colmena>): Promise<void> {
     const confirmAction = window.confirm(
-      colmena.estado === 'inactiva'
+      colmena.estado === EstadoModelo.INACTIVO
         ? `¿Estás seguro de reactivar la colmena "${colmena.numeroColmena}"?`
         : `¿Estás seguro de dar de baja la colmena "${colmena.numeroColmena}"? Las inspecciones históricas se preservarán.`
     );
@@ -108,7 +108,7 @@ export class ListadoView extends LitElement {
 
     try {
       this.deletingId = colmena.id;
-      const esReactivacion = colmena.estado === 'inactiva';
+      const esReactivacion = colmena.estado === EstadoModelo.INACTIVO;
       if (esReactivacion) {
         await colmenaService.reactivar(colmena.id);
       } else {
@@ -125,6 +125,10 @@ export class ListadoView extends LitElement {
     } finally {
       this.deletingId = null;
     }
+  }
+
+  private handleTrasladarColmena(colmenaId: string): void {
+    dispatchNavigate(this, `${ROUTES.TRASLADO}/${colmenaId}`);
   }
 
   private async handleAnularInspeccion(inspeccion: DocumentWithId<Inspeccion>, motivo: string): Promise<void> {
@@ -248,7 +252,7 @@ export class ListadoView extends LitElement {
         </wa-card>
       `,
       complete: (colmenas) => {
-        const filtrados = this.mostrarInactivos ? colmenas : colmenas.filter((c) => c.estado !== 'inactiva');
+        const filtrados = this.mostrarInactivos ? colmenas : colmenas.filter((c) => c.estado !== EstadoModelo.INACTIVO);
         if (colmenas.length === 0) {
           return html`
             <wa-card appearance="filled-outlined">
@@ -299,6 +303,7 @@ export class ListadoView extends LitElement {
                       .apiarios=${this.apiariosTask.value}
                       .deleting=${this.deletingId === colmena.id}
                       @delete=${() => this.handleInactivarColmena(colmena)}
+                      @trasladar=${(e: CustomEvent) => this.handleTrasladarColmena(e.detail.colmenaId)}
                     ></colmena-card>
                   `
                 )}

@@ -10,12 +10,14 @@ import {apiarioService, colmenaService, authService} from "../services";
 import {FirestoreController} from "../controllers";
 import "./apiario/formulario-apiario";
 import "./colmena/formulario-colmena";
+import "./colmena/formulario-traslado";
 import "./inspeccion/formulario-inspeccion";
 import "./home/home-view";
 import "./listado/listado-view";
 import "./login/login-view";
 import "./components/sync-indicator";
 import {customElement} from "lit/decorators.js";
+import {type Apiario, EstadoModelo} from "../models";
 
 export type {ViewType};
 
@@ -49,10 +51,7 @@ export class AppRouter extends LitElement {
             render: () => html`
                 <home-view></home-view>`,
             enter: () =>
-                this.requireAuth(() => {
-                    void this.apiariosController.loadDocuments();
-                    return this.setView(VIEWS.LISTADO_APIARIOS);
-                })
+                this.requireAuthAndSetView(VIEWS.LISTADO_APIARIOS)
         },
         {
             path: ROUTES.APIARIO,
@@ -65,11 +64,10 @@ export class AppRouter extends LitElement {
             render: () =>
                 html`
                     <formulario-colmena
-                            .apiarios=${this.apiariosController.value}
+                            .apiarios=${this.apiariosActivos()}
                     ></formulario-colmena>`,
             enter: () => {
-                void this.apiariosController.loadDocuments();
-                return this.requireAuth(() => this.setView(VIEWS.COLMENA));
+                return this.requireAuthAndSetView(VIEWS.COLMENA);
             },
         },
         {
@@ -78,12 +76,10 @@ export class AppRouter extends LitElement {
                 html`
                     <formulario-inspeccion
                             .colmenas=${this.colmenasController.value}
-                            .apiarios=${this.apiariosController.value}
+                            .apiarios=${this.apiariosActivos()}
                     ></formulario-inspeccion>`,
             enter: () => {
-                void this.colmenasController.loadDocuments();
-                void this.apiariosController.loadDocuments();
-                return this.requireAuth(() => this.setView(VIEWS.INSPECCION));
+                return this.requireAuthAndSetView(VIEWS.INSPECCION);
             },
         },
         {
@@ -92,31 +88,29 @@ export class AppRouter extends LitElement {
                 html`
                     <formulario-inspeccion
                             .colmenas=${this.colmenasController.value}
-                            .apiarios=${this.apiariosController.value}
+                            .apiarios=${this.apiariosActivos()}
                     ></formulario-inspeccion>`,
             enter: () => {
-                void this.colmenasController.loadDocuments();
-                void this.apiariosController.loadDocuments();
-                return this.requireAuth(() => this.setView(VIEWS.INSPECCION));
+                return this.requireAuthAndSetView(VIEWS.INSPECCION);
             },
         },
         {
             path: ROUTES.LISTADO_APIARIOS,
             render: () => html`
                 <home-view current-view="apiarios"></home-view>`,
-            enter: () => this.requireAuth(() => this.setView(VIEWS.LISTADO_APIARIOS)),
+            enter: () => this.requireAuthAndSetView(VIEWS.LISTADO_APIARIOS),
         },
         {
             path: ROUTES.LISTADO_COLMENAS,
             render: () => html`
                 <home-view current-view="colmenas"></home-view>`,
-            enter: () => this.requireAuth(() => this.setView(VIEWS.LISTADO_COLMENAS)),
+            enter: () => this.requireAuthAndSetView(VIEWS.LISTADO_COLMENAS),
         },
         {
             path: ROUTES.LISTADO_INSPECCIONES,
             render: () => html`
                 <home-view current-view="inspecciones"></home-view>`,
-            enter: () => this.requireAuth(() => this.setView(VIEWS.LISTADO_INSPECCIONES)),
+            enter: () => this.requireAuthAndSetView(VIEWS.LISTADO_INSPECCIONES),
         },
         {
             path: ROUTES.LISTADO,
@@ -124,7 +118,28 @@ export class AppRouter extends LitElement {
                 <home-view current-view="apiarios"></home-view>`,
             enter: () => this.requireAuth(() => this.setView(VIEWS.LISTADO_APIARIOS)),
         },
+        {
+            path: `${ROUTES.TRASLADO}/:id`,
+            render: ({id}) =>
+                html`
+                    <formulario-traslado
+                            .colmenas=${this.colmenasController.value}
+                            .apiarios=${this.apiariosActivos()}
+                            colmena-id="${id}"
+                    ></formulario-traslado>`,
+            enter: () =>
+                this.requireAuthAndSetView(VIEWS.TRASLADO)
+            ,
+        },
     ]);
+
+    private requireAuthAndSetView(view: ViewType) {
+        return this.requireAuth(() => {
+            void this.apiariosController.loadDocuments();
+            void this.colmenasController.loadDocuments();
+            return this.setView(view);
+        });
+    }
 
     override createRenderRoot() {
         return this;
@@ -234,6 +249,8 @@ export class AppRouter extends LitElement {
                 return "Nueva colmena";
             case VIEWS.INSPECCION:
                 return "Nueva inspección";
+            case VIEWS.TRASLADO:
+                return "Trasladar colmena";
             case VIEWS.LISTADO_COLMENAS:
                 return "Colmenas";
             case VIEWS.LISTADO_INSPECCIONES:
@@ -247,6 +264,11 @@ export class AppRouter extends LitElement {
     private handleLogout() {
         authService.logout();
         void this.navigate(ROUTES.LOGIN);
+    }
+
+    // TO-DO: mover a otro lugar
+    private apiariosActivos(): Apiario[] {
+        return this.apiariosController.value.filter(each => each.estado === EstadoModelo.ACTIVO);
     }
 }
 
