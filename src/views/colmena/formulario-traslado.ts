@@ -4,6 +4,7 @@ import {FeedbackController} from "../../controllers";
 import type {DocumentWithId} from "../../services";
 import {colmenaService} from "../../services";
 import type {Apiario, Colmena} from "../../models";
+import {MOTIVOS_TRASLADO} from "../../models";
 import {ROUTES} from "../../constants";
 import {dispatchNavigate} from "../../utils";
 
@@ -31,7 +32,7 @@ export class FormularioTraslado extends LitElement {
 
     // Leer colmena pre-seleccionada desde query param de la URL
     if (this.colmenaId) {
-      this.selectedColmenas = [this.colmenaId.toLowerCase()];
+      this.selectedColmenas = [this.colmenaId];
     }
   }
 
@@ -47,14 +48,8 @@ export class FormularioTraslado extends LitElement {
     return this.colmenas.filter((c) => this.selectedColmenas.includes(c.id));
   }
 
-  private get motivosTraslado(): { value: string; label: string }[] {
-    return [
-      { value: "Floración / Trashumancia", label: "Floración / Trashumancia" },
-      { value: "Sanidad / Aislamiento", label: "Sanidad / Aislamiento" },
-      { value: "Fusión de colmenares", label: "Fusión de colmenares" },
-      { value: "Optimización de espacio", label: "Optimización de espacio" },
-      { value: "Otro", label: "Otro" },
-    ];
+  private get motivosTraslado() {
+    return MOTIVOS_TRASLADO;
   }
 
   private async handleSubmit(event: Event): Promise<void> {
@@ -144,7 +139,7 @@ export class FormularioTraslado extends LitElement {
   private handleColmenaChange(event: Event): void {
     const select = event.target as any;
     const selectedIds: string[] = Array.isArray(select.value) ? select.value : [];
-    this.selectedColmenas = selectedIds.map(each => each.toLowerCase());
+    this.selectedColmenas = selectedIds;
   }
 
   private navigateToListado(): void {
@@ -157,36 +152,25 @@ export class FormularioTraslado extends LitElement {
   }
 
   override render() {
-    const selectedList = this.selectedColmenasList;
-    const origenApiarios = selectedList
-      .map((c) => this.apiarios.find((a) => a.id === c.apiarioId)?.nombre)
-      .filter(Boolean);
-    const origenTexto = origenApiarios.length > 0 ? origenApiarios.join(", ") : "";
-
+    const selectedColmenas = this.selectedColmenasList;
     // Filtrar apiarios de destino: excluir los apiarios de origen de las colmenas seleccionadas
-    const origenApiarioIds = selectedList.map((c) => c.apiarioId);
+    const origenApiarioIds = selectedColmenas.map((c) => c.apiarioId);
     const apiariosDestino = this.apiarios.filter((a) => !origenApiarioIds.includes(a.id));
 
     return html`
       <div class="wa-stack" style="gap: var(--wa-space-l);">
         <form id="form-traslado" class="beekeep-form" @submit=${this.handleSubmit}>
           <div class="form-group">
-            <wa-select id="traslado-colmena" name="colmenaId" placeholder="Seleccioná una o más colmenas" required with-clear size="medium" multiple .value=${this.selectedColmenas} @change=${this.handleColmenaChange}>
+            <wa-select id="traslado-colmena" name="colmenaId" placeholder="Seleccioná una o más colmenas" required with-clear size="m" multiple .value=${this.selectedColmenas} @change=${this.handleColmenaChange}>
               <span slot="label" class="field-label">Colmenas</span>
               ${this.colmenas.map(
-                (c) => html`<wa-option value=${c.id} ?selected=${this.selectedColmenas.includes(c.id.toLowerCase())}>${c.numeroColmena} — ${this.getApiarioNombre(c.apiarioId)}</wa-option>`
+                (c) => html`<wa-option value=${c.id} ?selected=${this.selectedColmenas.includes(c.id)}>${c.numeroColmena} — ${this.getApiarioNombre(c.apiarioId)}</wa-option>`
               )}
             </wa-select>
           </div>
 
           <div class="form-group">
-            <wa-input id="traslado-origen" name="apiarioOrigen" label="Apiario de origen" size="medium" readonly value=${origenTexto}>
-              <span slot="label" class="field-label">Apiario de origen</span>
-            </wa-input>
-          </div>
-
-          <div class="form-group">
-            <wa-select id="traslado-destino" name="apiarioDestinoId" placeholder="Seleccioná el apiario de destino" required with-clear size="medium">
+            <wa-select id="traslado-destino" name="apiarioDestinoId" placeholder="Seleccioná el apiario de destino" required with-clear size="m">
               <span slot="label" class="field-label">Apiario de destino</span>
               ${apiariosDestino.map(
                 (a) => html`<wa-option value=${a.id}>${a.nombre}</wa-option>`
@@ -195,11 +179,11 @@ export class FormularioTraslado extends LitElement {
           </div>
 
           <div class="form-group">
-            <wa-input id="traslado-fecha" name="fecha" type="date" label="Fecha del traslado" value=${this.today} size="medium" required></wa-input>
+            <wa-input id="traslado-fecha" name="fecha" type="date" label="Fecha del traslado" value=${this.today} size="m" required></wa-input>
           </div>
 
           <div class="form-group">
-            <wa-select id="traslado-motivo" name="motivo" placeholder="Seleccioná el motivo" required with-clear size="medium">
+            <wa-select id="traslado-motivo" name="motivo" placeholder="Seleccioná el motivo" required with-clear size="m">
               <span slot="label" class="field-label">Motivo del traslado</span>
               ${this.motivosTraslado.map(
                 (m) => html`<wa-option value=${m.value}>${m.label}</wa-option>`
@@ -208,7 +192,7 @@ export class FormularioTraslado extends LitElement {
           </div>
 
           <div class="form-group">
-            <wa-textarea id="traslado-notas" name="notas" label="Notas complementarias" placeholder="Detalles adicionales sobre el traslado..." rows="3" size="medium"></wa-textarea>
+            <wa-textarea id="traslado-notas" name="notas" label="Notas complementarias" placeholder="Detalles adicionales sobre el traslado..." rows="3" size="m"></wa-textarea>
           </div>
 
           <div id="traslado-feedback" class="feedback-container" aria-live="polite">

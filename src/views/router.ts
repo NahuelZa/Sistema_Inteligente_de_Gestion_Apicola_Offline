@@ -301,7 +301,7 @@ export class ViewRouter {
     }
 
     private syncFromUrl(): void {
-        const path = window.location.pathname.toLowerCase();
+        const path = window.location.pathname;
         void this.navigate(path);
     }
 }
