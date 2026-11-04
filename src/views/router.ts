@@ -206,11 +206,7 @@ export class AppRouter extends LitElement {
                             <span>${this.getViewTitle()}</span>
                         </h1>
 
-                        <div id="header-sync-container"
-                             style="margin-left: auto; display: flex; align-items: center; gap: var(--wa-space-s);">
-                            <sync-indicator></sync-indicator>
-                        </div>
-                        ${this.loginButton()}
+                        ${this.loggedInOnly()}
 
                     </div>
                 </header>
@@ -225,8 +221,12 @@ export class AppRouter extends LitElement {
         `;
     }
 
-    private loginButton() {
+    private loggedInOnly() {
         return this.currentView !== VIEWS.LOGIN ? html`
+            <div id="header-sync-container"
+                 style="margin-left: auto; display: flex; align-items: center; gap: var(--wa-space-s);">
+                <sync-indicator></sync-indicator>
+            </div>
             <wa-button
                     variant="neutral"
                     appearance="accent"
