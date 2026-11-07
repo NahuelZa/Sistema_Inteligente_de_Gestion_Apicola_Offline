@@ -6,6 +6,7 @@ import {
   type User as FirebaseUser
 } from "firebase/auth";
 import { auth } from "../config/firebase";
+import { type AuthProvider } from "./auth.interface";
 
 export interface UserProfile {
   uid: string;
@@ -29,7 +30,7 @@ function toUserProfile(firebaseUser: FirebaseUser): UserProfile {
  * Utiliza Firebase Authentication para identificar al apicultor actual
  * y garantizar el aislamiento de datos.
  */
-export class AuthService {
+export class AuthService implements AuthProvider {
   private currentUser: UserProfile | null = null;
   private userChecked: ((value: boolean | PromiseLike<boolean>) => void) | null = null;
 

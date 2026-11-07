@@ -8,6 +8,34 @@ import { ROUTES } from "../../constants";
 import { dispatchNavigate } from "../../utils";
 
 /**
+ * Valores por defecto para un formulario de inspección.
+ */
+const DEFAULT_INSPECCION = {
+  fecha: "",
+  poblacion: "media" as const,
+  reinaVista: false,
+  tienePostura: false,
+  estadoSanitario: "bueno" as const,
+  enfermedadesDetectadas: "",
+  notas: "",
+} as const;
+
+/**
+ * Datos extraídos del formulario de inspección.
+ */
+interface InspeccionFormData {
+  colmenaId: string;
+  fecha: string;
+  poblacion: "baja" | "media" | "alta";
+  reinaVista: boolean;
+  tienePostura: boolean;
+  estadoSanitario: "bueno" | "alerta" | "enferma";
+  enfermedadesDetectadas: string;
+  notas: string;
+  esOnline: boolean;
+}
+
+/**
  * Vista de Registro de Inspección de Colmena en Campo.
  * Diseñada para máxima ergonomía táctil en condiciones offline.
  */
@@ -42,68 +70,88 @@ export class FormularioInspeccion extends LitElement {
     event.preventDefault();
     const form = event.target as HTMLFormElement;
 
-    const colmenaSelect = form.querySelector<any>("#inspeccion-colmena")!;
-    const fechaInput = form.querySelector<any>("#inspeccion-fecha")!;
-    const poblacionSelect = form.querySelector<any>("#inspeccion-poblacion")!;
-    const reinaCheckbox = form.querySelector<any>("#inspeccion-reina")!;
-    const posturaCheckbox = form.querySelector<any>("#inspeccion-postura")!;
-    const sanidadSelect = form.querySelector<any>("#inspeccion-sanidad")!;
-    const enfermedadesInput = form.querySelector<any>("#inspeccion-enfermedades")!;
-    const notasTextarea = form.querySelector<any>("#inspeccion-notas")!;
-
-    const colmenaId = colmenaSelect.value.trim();
-    const fecha = fechaInput.value.trim();
-    const poblacion = poblacionSelect.value.trim() as "baja" | "media" | "alta";
-    const reinaVista = reinaCheckbox.checked;
-    const tienePostura = posturaCheckbox.checked;
-    const estadoSanitario = sanidadSelect.value.trim() as "bueno" | "alerta" | "enferma";
-    const enfermedadesDetectadas = enfermedadesInput.value?.trim() || "Ninguna detectada";
-    const notas = notasTextarea.value.trim();
-    const selectedColmena = this.colmenas.find((c) => c.id === colmenaId)!;
-    const colmenaNumero = selectedColmena.numeroColmena;
-    const apiarioId = selectedColmena.apiarioId;
-
-
-    const userId = authService.getCurrentUserId()!;
-    const nuevaInspeccion: Inspeccion = {
-      userId,
-      colmenaId,
-      apiarioId,
-      fecha,
-      poblacion,
-      reinaVista,
-      tienePostura,
-      estadoSanitario,
-      enfermedadesDetectadas,
-      notas,
-      createdAtLocal: new Date().toISOString(),
-    };
-
     try {
       this.loading = true;
-
-      if (navigator.onLine) {
-        await inspeccionService.create(nuevaInspeccion);
-        this.feedback.show(`¡Inspección para la colmena "${colmenaNumero}" registrada y sincronizada con éxito!`, "success");
-      } else {
-        inspeccionService.create(nuevaInspeccion);
-        this.feedback.show("Guardado localmente en el dispositivo. Pendiente de sincronización al recuperar señal.", "warning");
-      }
-
-      colmenaSelect.value = "";
-      fechaInput.value = this.today;
-      poblacionSelect.value = "media";
-      reinaCheckbox.checked = false;
-      posturaCheckbox.checked = false;
-      sanidadSelect.value = "bueno";
-      enfermedadesInput.value = "";
-      notasTextarea.value = "";
+      const datos = this.extraerDatosFormulario(form);
+      const inspeccion = this.construirInspeccion(datos);
+      const mensaje = await this.guardarInspeccion(inspeccion, datos);
+      this.feedback.show(mensaje, datos.esOnline ? "success" : "warning");
+      this.resetearFormulario(form);
     } catch (error) {
       console.error("Error al guardar inspección:", error);
       this.feedback.show("Error al registrar la inspección. Se guardará localmente en el dispositivo.", "warning");
     } finally {
       this.loading = false;
     }
+  }
+
+  private extraerDatosFormulario(form: HTMLFormElement): InspeccionFormData {
+    const getValorTrim = (selector: string) => form.querySelector<any>(selector)!.value.trim();
+    const getCheckbox = (selector: string) => form.querySelector<any>(selector)!.checked;
+
+    return {
+      colmenaId: getValorTrim("#inspeccion-colmena"),
+      fecha: getValorTrim("#inspeccion-fecha"),
+      poblacion: getValorTrim("#inspeccion-poblacion") as "baja" | "media" | "alta",
+      reinaVista: getCheckbox("#inspeccion-reina"),
+      tienePostura: getCheckbox("#inspeccion-postura"),
+      estadoSanitario: getValorTrim("#inspeccion-sanidad") as "bueno" | "alerta" | "enferma",
+      enfermedadesDetectadas: getValorTrim("#inspeccion-enfermedades") || "Ninguna detectada",
+      notas: getValorTrim("#inspeccion-notas"),
+      esOnline: navigator.onLine,
+    };
+  }
+
+  private construirInspeccion(datos: InspeccionFormData): Inspeccion {
+    const selectedColmena = this.colmenas.find((c) => c.id === datos.colmenaId)!;
+    const userId = authService.getCurrentUserId()!;
+
+    return {
+      userId,
+      colmenaId: datos.colmenaId,
+      apiarioId: selectedColmena.apiarioId,
+      fecha: datos.fecha,
+      poblacion: datos.poblacion,
+      reinaVista: datos.reinaVista,
+      tienePostura: datos.tienePostura,
+      estadoSanitario: datos.estadoSanitario,
+      enfermedadesDetectadas: datos.enfermedadesDetectadas,
+      notas: datos.notas,
+      createdAtLocal: new Date().toISOString(),
+    };
+  }
+
+  private async guardarInspeccion(
+    inspeccion: Inspeccion,
+    datos: InspeccionFormData
+  ): Promise<string> {
+    const selectedColmena = this.colmenas.find((c) => c.id === datos.colmenaId)!;
+    const colmenaNumero = selectedColmena.numeroColmena;
+
+    if (datos.esOnline) {
+      await inspeccionService.create(inspeccion);
+      return `¡Inspección para la colmena "${colmenaNumero}" registrada y sincronizada con éxito!`;
+    } else {
+      inspeccionService.create(inspeccion);
+      return "Guardado localmente en el dispositivo. Pendiente de sincronización al recuperar señal.";
+    }
+  }
+
+  private resetearFormulario(form: HTMLFormElement): void {
+    const campos = form.querySelectorAll<HTMLInputElement | HTMLSelectElement>("input, select, textarea");
+    campos.forEach(campo => {
+      if (campo instanceof HTMLInputElement && campo.type === "checkbox") {
+        campo.checked = false;
+      } else if (campo.id === "inspeccion-fecha") {
+        (campo as HTMLInputElement | HTMLSelectElement).value = this.today;
+      } else if (campo.id === "inspeccion-poblacion") {
+        (campo as HTMLInputElement | HTMLSelectElement).value = DEFAULT_INSPECCION.poblacion;
+      } else if (campo.id === "inspeccion-sanidad") {
+        (campo as HTMLInputElement | HTMLSelectElement).value = DEFAULT_INSPECCION.estadoSanitario;
+      } else {
+        (campo as HTMLInputElement | HTMLSelectElement).value = "";
+      }
+    });
   }
 
   private navigateToListado(): void {

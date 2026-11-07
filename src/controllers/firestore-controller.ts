@@ -1,14 +1,30 @@
 import { nothing, type ReactiveController, type ReactiveControllerHost } from "lit";
 import {type DocumentData, type Unsubscribe, type WithFieldValue} from "firebase/firestore";
-import {type FirestoreService, authService} from "../services";
+import {type FirestoreService, SyncListener} from "../services";
 import { ModeloBase } from "../models";
 
 export type TaskStatus = "initial" | "pending" | "complete" | "error";
 
-export interface FirestoreControllerOptions {
+/**
+ * Opciones de carga del controller.
+ */
+export interface FirestoreLoadOptions {
   autoLoad?: boolean;
+}
+
+/**
+ * Callbacks de resultado de operaciones del controller.
+ */
+export interface FirestoreCallbacks {
   onSuccess?: (data: ModeloBase[]) => void;
   onError?: (error: unknown) => void;
+}
+
+/**
+ * Opciones combinadas para FirestoreController: carga + callbacks.
+ * Cada cliente puede usar solo la interfaz que necesita (ISP).
+ */
+export interface FirestoreControllerOptions extends FirestoreLoadOptions, FirestoreCallbacks {
 }
 
 export interface FirestoreRenderOptions {
@@ -55,11 +71,17 @@ export class FirestoreController<T extends DocumentData = DocumentData> implemen
   }
 
   private async loadAndAddListeners() {
-    await authService.isAuthenticated();
+    const auth = this.service.getAuthProvider();
+    await auth.isAuthenticated();
     await this.loadDocuments();
-    const userId = authService.getCurrentUserId();
+    const userId = auth.getCurrentUserId();
     if (userId) {
-      this.unsubSync = this.service.onSynced(userId, () => this.loadDocuments());
+      const syncListener = new SyncListener(this.service.getFirestore());
+      this.unsubSync = syncListener.onSynced(
+        this.service.getCollectionName(),
+        userId,
+        () => this.loadDocuments()
+      );
     }
   }
 

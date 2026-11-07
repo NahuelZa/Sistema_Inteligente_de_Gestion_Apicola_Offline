@@ -4,18 +4,17 @@ import {
   addDoc,
   updateDoc,
   onSnapshot,
-  serverTimestamp,
   query,
   where,
   type Firestore,
   type CollectionReference,
   type DocumentReference,
   type DocumentData,
-  type WithFieldValue,
-  type Unsubscribe
+  type WithFieldValue
 } from "firebase/firestore";
 import { db as defaultDb } from "../config/firebase";
 import { authService } from "./auth.service";
+import { type AuthProvider } from "./auth.interface";
 import { ModeloBase } from "../models";
 
 export type DocumentWithId<T> = T & { id: string, estaSincronizado?: boolean };
@@ -31,6 +30,7 @@ export class FirestoreService<T extends DocumentData = DocumentData> {
   private static instances: Set<FirestoreService<any>> = new Set();
   protected readonly firestore: Firestore;
   protected readonly collectionName: string;
+  private readonly auth: AuthProvider;
 
   /**
    * Crea una instancia de la clase modelo a partir de los datos crudos de Firestore.
@@ -42,12 +42,13 @@ export class FirestoreService<T extends DocumentData = DocumentData> {
     return raw as unknown as ModeloBase;
   }
 
-  constructor(collectionName: string, firestoreInstance: Firestore = defaultDb) {
+  constructor(collectionName: string, options: { firestore?: Firestore; auth?: AuthProvider } = {}) {
     if (!collectionName || collectionName.trim() === "") {
       throw new Error("El nombre de la colección no puede estar vacío.");
     }
     this.collectionName = collectionName;
-    this.firestore = firestoreInstance;
+    this.firestore = options.firestore ?? defaultDb;
+    this.auth = options.auth ?? authService;
     FirestoreService.instances.add(this);
   }
 
@@ -56,6 +57,20 @@ export class FirestoreService<T extends DocumentData = DocumentData> {
    */
   public static getInstances(): FirestoreService<any>[] {
     return Array.from(FirestoreService.instances);
+  }
+
+  /**
+   * Obtiene la instancia de Firestore inyectada.
+   */
+  public getFirestore(): Firestore {
+    return this.firestore;
+  }
+
+  /**
+   * Obtiene el proveedor de autenticación inyectado.
+   */
+  public getAuthProvider(): AuthProvider {
+    return this.auth;
   }
 
   /**
@@ -84,9 +99,8 @@ export class FirestoreService<T extends DocumentData = DocumentData> {
    * @param data Datos del documento a almacenar.
    * @returns Identificador asignado al nuevo documento.
    */
-  @FirestoreService.withTimeout(3_000)
   public async create(data: WithFieldValue<Omit<T, "id">>): Promise<string> {
-    const currentUserId = authService.getCurrentUserId();
+    const currentUserId = this.auth.getCurrentUserId();
     if (!currentUserId) {
       throw new Error("Operación rechazada: Usuario no autenticado.");
     }
@@ -107,32 +121,14 @@ export class FirestoreService<T extends DocumentData = DocumentData> {
    * @param id Identificador del documento a actualizar.
    * @param data Campos a actualizar en el documento.
    */
-  @FirestoreService.withTimeout(3_000)
   public async update(id: string, data: Partial<T>): Promise<void> {
-    const currentUserId = authService.getCurrentUserId();
+    const currentUserId = this.auth.getCurrentUserId();
     if (!currentUserId) {
       throw new Error("Operación rechazada: Usuario no autenticado.");
     }
 
     const docRef = this.getDocRef(id);
     await updateDoc(docRef, data as DocumentData);
-  }
-
-  public onSyncDo(id: string, callback: () => void) {
-    const docRef = this.getDocRef(id);
-    const unsubscribe = onSnapshot(
-        docRef,
-        { includeMetadataChanges: true },
-        (snapshot) => {
-          const isSyncedWithServer =
-              !snapshot.metadata.fromCache && !snapshot.metadata.hasPendingWrites;
-
-          if (isSyncedWithServer) {
-            callback();
-            unsubscribe();
-          }
-        }
-    );
   }
 
   /**
@@ -142,7 +138,7 @@ export class FirestoreService<T extends DocumentData = DocumentData> {
    * @returns Lista de instancias de modelo del usuario con estado de sincronización.
    */
   public async getAll(userId?: string): Promise<ModeloBase[]> {
-    const targetUserId = userId || authService.getCurrentUserId();
+    const targetUserId = userId || this.auth.getCurrentUserId();
     if (!targetUserId) {
       throw new Error(`Operación rechazada: No se puede obtener "${this.collectionName}" sin usuario autenticado.`);
     }
@@ -185,92 +181,5 @@ export class FirestoreService<T extends DocumentData = DocumentData> {
     const todos = await this.getAll(userId);
     return todos.filter(each => each.esActivo());
   }
-
-  /**
-   * Suscribe un listener para observar en tiempo real si existen escrituras pendientes de sincronización (offline)
-   * para los documentos del usuario en esta colección.
-   * @param userId Identificador del usuario.
-   * @param callback Callback que recibe un booleano indicando si hay escrituras pendientes.
-   * @returns Función Unsubscribe para cancelar la suscripción.
-   */
-  public onPendingWritesChange(
-    userId: string,
-    callback: (hasPending: boolean) => void
-  ): Unsubscribe {
-    const colRef = this.getCollectionRef();
-    const userQuery = query(colRef, where("userId", "==", userId));
-
-    return onSnapshot(
-      userQuery,
-      { includeMetadataChanges: true },
-      (snapshot) => {
-        const hasPending = snapshot.metadata.hasPendingWrites;
-        callback(hasPending);
-      },
-      (error) => {
-        console.error(`Error en listener de pending writes para "${this.collectionName}":`, error);
-      }
-    );
-  }
-
-  /**
-   * Suscribe un listener a nivel de colección que invoca el callback cuando todas las escrituras pendientes
-   * del usuario han sido sincronizadas con el servidor. Útil para re-cargar datos después de operaciones offline.
-   * @param userId Identificador del usuario.
-   * @param callback Callback invocado cuando no quedan escrituras pendientes y hay documentos en la colección.
-   * @returns Función Unsubscribe para cancelar la suscripción.
-   */
-  public onSynced(
-    userId: string,
-    callback: () => void
-  ): Unsubscribe {
-    const colRef = this.getCollectionRef();
-    const userQuery = query(colRef, where("userId", "==", userId));
-
-    return onSnapshot(
-      userQuery,
-      { includeMetadataChanges: true },
-      (snapshot) => {
-        const hasPending = snapshot.docs.some((d) => d.metadata.hasPendingWrites);
-        if (!hasPending && snapshot.docs.length > 0) {
-          callback();
-        }
-      },
-      (error) => {
-        console.error(`Error en listener de sincronización para "${this.collectionName}":`, error);
-      }
-    );
-  }
-
-  /**
-   * Decorator factory that wraps an async method with a timeout.
-   * If the method doesn't resolve within the specified time, it rejects with a TimeoutError.
-   * The message is resolved at runtime from the instance, so `collectionName` is available.
-   */
-  private static withTimeout(ms: number) {
-    return function (_target: any, _propertyKey: string, descriptor: PropertyDescriptor) {
-      const originalMethod = descriptor.value;
-
-      descriptor.value = async function (this: FirestoreService<any>, ...args: any[]): Promise<any> {
-        const collectionName = this.collectionName;
-        const timeoutMessage = `Timeout: La operación en "${collectionName}" tardó más de ${ms / 1000}s en responder.`;
-
-        return Promise.race([
-          originalMethod.apply(this, args),
-          new Promise<never>((_, reject) => {
-            setTimeout(() => reject(new Error(timeoutMessage)), ms);
-          })
-        ]);
-      };
-
-      return descriptor;
-    };
-  }
-
-
-
-  // Utilidades estáticas de Firestore
-  public static serverTimestamp() {
-    return serverTimestamp();
-  }
 }
+
