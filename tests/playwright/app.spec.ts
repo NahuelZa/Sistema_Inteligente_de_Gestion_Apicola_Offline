@@ -115,6 +115,32 @@ async function registerAndLogin(page: any, prefix: string) {
   return { testEmail, testPassword };
 }
 
+// Credenciales compartidas para los tests de gestión
+const gestionEmail = 'gestion-shared@example.com';
+const gestionPassword = 'password123';
+
+/**
+ * Asegura que la cuenta compartida de gestión existe y realiza login.
+ * Intenta login primero; si falla (cuenta no existe), la crea.
+ */
+async function setupGestionUser(page: any) {
+  // Intentar login primero (funciona si la cuenta ya existe de un run anterior)
+  await page.goto('/');
+  await page.getByWaInput('auth-email').fill(gestionEmail);
+  await page.getByWaInput('auth-password').fill(gestionPassword);
+  await page.getByTestId('auth-submit-btn').click();
+
+  // Si el login tuvo éxito, la página redirige a /apiarios
+  const currentUrl = page.url();
+  if (currentUrl.includes('/apiarios')) {
+    return;
+  }
+
+  // Login falló — la cuenta no existe aún, crearla
+  await page.getByTestId('auth-toggle-mode').click();
+  await registerAccount(page, gestionEmail, gestionPassword);
+}
+
 test.describe('BeeKeep Application', () => {
   test('debe cargar la página principal correctamente', async ({ page }) => {
     await page.goto('/');
@@ -170,7 +196,7 @@ test.describe('BeeKeep Application', () => {
 
 test.describe('Gestión de Apiarios, Colmenas e Inspecciones', () => {
   test.beforeEach(async ({ page }) => {
-    await registerAndLogin(page, 'gestion');
+    await setupGestionUser(page);
   });
 
   test('debe poder crear un apiario', async ({ page }) => {
