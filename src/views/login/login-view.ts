@@ -38,10 +38,10 @@ export class LoginView extends LitElement {
       this.loading = true;
 
       if (this.mode === "login") {
-        await authService.login(email, password);
+        await authService.login({ email, password });
         this.feedback.show("¡Bienvenido!", "success");
       } else {
-        await authService.register(email, password);
+        await authService.register({ email, password });
         this.feedback.show("¡Cuenta creada! Ya estás conectado.", "success");
       }
 

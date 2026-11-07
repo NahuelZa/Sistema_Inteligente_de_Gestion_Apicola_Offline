@@ -41,7 +41,7 @@ export class TrasladoTimeline extends LitElement {
   }
 
   private getApiarioNombre(apiarioId: string): string {
-    const apiario = this.apiarios.find((a) => a.id === apiarioId);
+    const apiario = this.apiarios?.find((a) => a.id === apiarioId);
     return apiario ? apiario.nombre : "Apiario desconocido";
   }
 

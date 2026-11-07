@@ -87,7 +87,7 @@ export class ApiariosListado extends LitElement {
     }
   }
 
-  private renderItem(apiario: ModeloBase) {
+  private renderItem = (apiario: ModeloBase) => {
     const deleting = this.deletingId === apiario.id;
     return html`
       <apiario-card
@@ -96,7 +96,7 @@ export class ApiariosListado extends LitElement {
         @delete=${(e: CustomEvent) => this.handleDelete(e.detail.apiario)}
       ></apiario-card>
     `;
-  }
+  };
 
   override render() {
     if (!this.task) return nothing;

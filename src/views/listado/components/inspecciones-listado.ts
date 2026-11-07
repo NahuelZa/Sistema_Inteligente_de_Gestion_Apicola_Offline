@@ -80,7 +80,7 @@ export class InspeccionesListado extends LitElement {
     }
   }
 
-  private renderItem(inspeccion: ModeloBase) {
+  private renderItem = (inspeccion: ModeloBase) => {
     const deleting = this.deletingId === inspeccion.id;
     return html`
       <inspeccion-card
@@ -91,7 +91,7 @@ export class InspeccionesListado extends LitElement {
         @anular=${(e: CustomEvent) => this.handleAnularInspeccion(e.detail.inspeccion, e.detail.motivo)}
       ></inspeccion-card>
     `;
-  }
+  };
 
   override render() {
     if (!this.task) return nothing;

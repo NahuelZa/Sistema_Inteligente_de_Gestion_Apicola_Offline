@@ -5,7 +5,7 @@ import { inspeccionService, authService } from "../../services";
 import type { Apiario, Colmena, Inspeccion,  } from "../../models";
 import type { DocumentWithId } from "../../services";
 import { ROUTES } from "../../constants";
-import { dispatchNavigate } from "../../utils";
+import { dispatchNavigate, getTodayDateString } from "../../utils";
 
 /**
  * Valores por defecto para un formulario de inspección.
@@ -52,11 +52,7 @@ export class FormularioInspeccion extends LitElement {
   }
 
   private get today(): string {
-    const d = new Date();
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
+    return getTodayDateString();
   }
 
   private getApiarioName(apiarioId: string): string {

@@ -99,7 +99,7 @@ export class ColmenasListado extends LitElement {
     dispatchNavigate(this, `${ROUTES.TRASLADO}/${colmenaId}`);
   }
 
-  private renderItem(colmena: ModeloBase) {
+  private renderItem = (colmena: ModeloBase) => {
     const deleting = this.deletingId === colmena.id;
     return html`
       <colmena-card
@@ -110,7 +110,7 @@ export class ColmenasListado extends LitElement {
         @trasladar=${(e: CustomEvent) => this.handleTrasladarColmena(e.detail.colmenaId)}
       ></colmena-card>
     `;
-  }
+  };
 
   override render() {
     if (!this.task) return nothing;

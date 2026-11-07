@@ -38,7 +38,7 @@ export class ColmenaCard extends LitElement {
 
   private getApiarioNombre(): string {
     const c = this.colmena as ColmenaModel;
-    const apiario = this.apiarios.find((a) => a.id === c.apiarioId);
+    const apiario = this.apiarios?.find((a) => a.id === c?.apiarioId);
     return apiario ? apiario.nombre : 'Apiario no encontrado';
   }
 
@@ -77,6 +77,7 @@ export class ColmenaCard extends LitElement {
 
         <div slot="footer" class="wa-cluster" style="gap: var(--wa-space-xs);">
           <wa-button
+            data-testid="colmena-trasladar-btn"
             variant="brand"
             appearance="filled"
             size="small"

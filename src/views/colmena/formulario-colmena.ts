@@ -5,7 +5,7 @@ import type {DocumentWithId} from "../../services";
 import {authService, colmenaService} from "../../services";
 import {type Apiario, type Colmena, EstadoModelo} from "../../models";
 import {ROUTES} from "../../constants";
-import {dispatchNavigate} from "../../utils";
+import { dispatchNavigate, getTodayDateString } from "../../utils";
 
 /**
  * Vista de Alta de Colmena
@@ -21,13 +21,8 @@ export class FormularioColmena extends LitElement {
     return this;
   }
 
-  // TO-DO: buscar los lugares donde se repita esta función y extraer a un "utils"
   private get today(): string {
-    const d = new Date();
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
+    return getTodayDateString();
   }
 
   private async handleSubmit(event: Event): Promise<void> {
@@ -44,7 +39,7 @@ export class FormularioColmena extends LitElement {
     const fechaAlta = fechaInput.value.trim();
     const notas = notasTextarea.value.trim();
 
-    const selectedApiario = this.apiarios.find((apiario) => apiario.id === apiarioId);
+    const selectedApiario = this.apiarios?.find((apiario) => apiario.id === apiarioId);
     const apiarioNombre = selectedApiario?.nombre ?? "Apiario desconocido";
 
     const userId = authService.getCurrentUserId()!;

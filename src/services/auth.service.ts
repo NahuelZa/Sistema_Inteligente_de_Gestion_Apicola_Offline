@@ -8,6 +8,11 @@ import {
 import { auth } from "../config/firebase";
 import { type AuthProvider } from "./auth.interface";
 
+export interface UserCredentials {
+  email: string;
+  password: string;
+}
+
 export interface UserProfile {
   uid: string;
   email: string;
@@ -41,8 +46,8 @@ export class AuthService implements AuthProvider {
   /**
    * Inicia sesión con email y contraseña.
    */
-  public async login(email: string, password: string): Promise<UserProfile> {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+  public async login(credentials: UserCredentials): Promise<UserProfile> {
+    const userCredential = await signInWithEmailAndPassword(auth, credentials.email, credentials.password);
     const profile = toUserProfile(userCredential.user);
     this.currentUser = profile;
     return profile;
@@ -51,8 +56,8 @@ export class AuthService implements AuthProvider {
   /**
    * Registra un nuevo usuario con email y contraseña.
    */
-  public async register(email: string, password: string): Promise<UserProfile> {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+  public async register(credentials: UserCredentials): Promise<UserProfile> {
+    const userCredential = await createUserWithEmailAndPassword(auth, credentials.email, credentials.password);
     const profile = toUserProfile(userCredential.user);
     this.currentUser = profile;
     return profile;
