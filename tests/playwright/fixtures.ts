@@ -1,18 +1,25 @@
-import { test as base, type Locator } from '@playwright/test';
+import { test as base, type Page, type Locator } from '@playwright/test';
 
 /**
- * Extiende el test base de Playwright con locators personalizados.
+ * Extiende el objeto Page de Playwright con locators personalizados.
  *
  * - `getByWaInput(testId)`: Encuentra un `<wa-input>` por su `data-testid`
  *   y resuelve automáticamente el `<input>` nativo dentro del Shadow DOM.
  */
+declare module '@playwright/test' {
+  interface Page {
+    getByWaInput(testId: string): Locator;
+  }
+}
+
 export const test = base.extend<{
-  getByWaInput: (testId: string) => Locator;
+  page: Page;
 }>({
-  getByWaInput: async ({ page }, use) => {
-    await use((testId: string) => {
+  page: async ({ page }, use) => {
+    page.getByWaInput = (testId: string) => {
       return page.getByTestId(testId).locator('input');
-    });
+    };
+    await use(page);
   },
 });
 

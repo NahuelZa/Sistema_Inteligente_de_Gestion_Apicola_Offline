@@ -228,6 +228,7 @@ export class AppRouter extends LitElement {
                 <sync-indicator></sync-indicator>
             </div>
             <wa-button
+                    data-testid="logout-btn"
                     variant="neutral"
                     appearance="accent"
                     size="xs"
