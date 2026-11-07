@@ -9,10 +9,15 @@
     "preview": "vite preview",
     "test": "vitest run tests/firestore-service.test.ts",
     "test:rules": "firebase emulators:exec --only firestore \"vitest run tests/firestore-rules.test.ts\"",
-    "test:integration": "firebase emulators:exec --only firestore \"vitest run --config vite.integration.config.ts\""
+    "test:integration": "firebase emulators:exec --only firestore \"vitest run --config vite.integration.config.ts\"",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:install": "playwright install --with-deps"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^5.0.2",
+    "@playwright/test": "^1.65.0",
     "firebase-tools": "^15.33.0",
     "typescript": "~6.0.2",
     "vite": "^8.3.0",

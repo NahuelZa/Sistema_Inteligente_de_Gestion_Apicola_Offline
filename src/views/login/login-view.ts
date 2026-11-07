@@ -92,7 +92,7 @@ export class LoginView extends LitElement {
         <div class="login-card">
           <div class="login-header">
             <span class="login-logo">🐝</span>
-            <h2 class="wa-heading-lg wa-font-weight-bold">${title}</h2>
+            <h2 data-testid="auth-heading" class="wa-heading-lg wa-font-weight-bold">${title}</h2>
             <p class="login-subtitle">BeeKeep — Gestión de apiarios</p>
           </div>
 
@@ -100,6 +100,7 @@ export class LoginView extends LitElement {
             <div class="form-group">
               <wa-input
                 id="auth-email"
+                data-testid="auth-email"
                 name="email"
                 type="email"
                 placeholder="tu@email.com"
@@ -114,6 +115,7 @@ export class LoginView extends LitElement {
             <div class="form-group">
               <wa-input
                 id="auth-password"
+                data-testid="auth-password"
                 name="password"
                 type="password"
                 placeholder="Contraseña"
@@ -124,13 +126,14 @@ export class LoginView extends LitElement {
               </wa-input>
             </div>
 
-            <div id="auth-feedback" class="feedback-container" aria-live="polite">
+            <div id="auth-feedback" data-testid="auth-feedback" class="feedback-container" aria-live="polite">
               ${this.feedback.render()}
             </div>
 
             <div class="form-actions" style="display: flex; flex-direction: column; gap: var(--wa-space-s);">
               <wa-button
                 id="auth-submit-btn"
+                data-testid="auth-submit-btn"
                 type="submit"
                 variant="brand"
                 appearance="accent"
@@ -143,6 +146,7 @@ export class LoginView extends LitElement {
               </wa-button>
 
               <wa-button
+                data-testid="auth-toggle-mode"
                 type="button"
                 variant="neutral"
                 appearance="outlined"
