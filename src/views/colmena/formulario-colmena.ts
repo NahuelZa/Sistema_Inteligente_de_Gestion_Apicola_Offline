@@ -62,10 +62,10 @@ export class FormularioColmena extends LitElement {
       this.loading = true;
 
       if (navigator.onLine) {
-        colmenaService.create(nuevaColmena);
+        await colmenaService.create(nuevaColmena);
         this.feedback.show(`¡Colmena "${numeroColmena}" guardada y sincronizada con éxito en ${apiarioNombre}!`, "success");
       } else {
-        await colmenaService.create(nuevaColmena);
+        colmenaService.create(nuevaColmena);
         this.feedback.show("Guardado localmente en el dispositivo. Pendiente de sincronización al recuperar señal.", "warning");
       }
 

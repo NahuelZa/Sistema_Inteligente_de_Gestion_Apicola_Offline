@@ -60,7 +60,7 @@ export class FormularioInspeccion extends LitElement {
   }
 
   private getApiarioName(apiarioId: string): string {
-    const apiario = this.apiarios.find((a) => a.id === apiarioId);
+    const apiario = this.apiarios?.find((a) => a.id === apiarioId);
     return apiario ? apiario.nombre : 'Sin apiario';
   }
 
@@ -86,8 +86,8 @@ export class FormularioInspeccion extends LitElement {
   }
 
   private extraerDatosFormulario(form: HTMLFormElement): InspeccionFormData {
-    const getValorTrim = (selector: string) => form.querySelector<any>(selector)!.value.trim();
-    const getCheckbox = (selector: string) => form.querySelector<any>(selector)!.checked;
+    const getValorTrim = (selector: string) => (form.querySelector<any>(selector)?.value ?? "").trim();
+    const getCheckbox = (selector: string) => !!form.querySelector<any>(selector)?.checked;
 
     return {
       colmenaId: getValorTrim("#inspeccion-colmena"),
@@ -103,13 +103,13 @@ export class FormularioInspeccion extends LitElement {
   }
 
   private construirInspeccion(datos: InspeccionFormData): Inspeccion {
-    const selectedColmena = this.colmenas.find((c) => c.id === datos.colmenaId)!;
+    const selectedColmena = this.colmenas?.find((c) => c.id === datos.colmenaId);
     const userId = authService.getCurrentUserId()!;
 
     return {
       userId,
       colmenaId: datos.colmenaId,
-      apiarioId: selectedColmena.apiarioId,
+      apiarioId: selectedColmena?.apiarioId ?? "",
       fecha: datos.fecha,
       poblacion: datos.poblacion,
       reinaVista: datos.reinaVista,
@@ -125,8 +125,8 @@ export class FormularioInspeccion extends LitElement {
     inspeccion: Inspeccion,
     datos: InspeccionFormData
   ): Promise<string> {
-    const selectedColmena = this.colmenas.find((c) => c.id === datos.colmenaId)!;
-    const colmenaNumero = selectedColmena.numeroColmena;
+    const selectedColmena = this.colmenas?.find((c) => c.id === datos.colmenaId);
+    const colmenaNumero = selectedColmena?.numeroColmena ?? "Desconocida";
 
     if (datos.esOnline) {
       await inspeccionService.create(inspeccion);

@@ -3,6 +3,7 @@ import {
   doc,
   addDoc,
   updateDoc,
+  deleteDoc,
   onSnapshot,
   query,
   where,
@@ -99,6 +100,7 @@ export class FirestoreService<T extends DocumentData = DocumentData> {
    * @param data Datos del documento a almacenar.
    * @returns Identificador asignado al nuevo documento.
    */
+  @FirestoreService.withTimeout(3_000)
   public async create(data: WithFieldValue<Omit<T, "id">>): Promise<string> {
     const currentUserId = this.auth.getCurrentUserId();
     if (!currentUserId) {
@@ -121,6 +123,7 @@ export class FirestoreService<T extends DocumentData = DocumentData> {
    * @param id Identificador del documento a actualizar.
    * @param data Campos a actualizar en el documento.
    */
+  @FirestoreService.withTimeout(3_000)
   public async update(id: string, data: Partial<T>): Promise<void> {
     const currentUserId = this.auth.getCurrentUserId();
     if (!currentUserId) {
@@ -129,6 +132,46 @@ export class FirestoreService<T extends DocumentData = DocumentData> {
 
     const docRef = this.getDocRef(id);
     await updateDoc(docRef, data as DocumentData);
+  }
+
+  /**
+   * Elimina un documento específico por su ID asegurando que el usuario esté autenticado.
+   * @param id Identificador del documento a eliminar.
+   */
+  @FirestoreService.withTimeout(3_000)
+  public async delete(id: string): Promise<void> {
+    const currentUserId = this.auth.getCurrentUserId();
+    if (!currentUserId) {
+      throw new Error("Operación rechazada: Usuario no autenticado.");
+    }
+
+    const docRef = this.getDocRef(id);
+    await deleteDoc(docRef);
+  }
+
+  /**
+   * Decorador que envuelve un método asíncrono con un timeout.
+   * Si el método no resuelve en el tiempo especificado, rechaza con un Error de Timeout.
+   * El mensaje se resuelve dinámicamente usando collectionName.
+   */
+  private static withTimeout(ms: number) {
+    return function (_target: any, _propertyKey: string, descriptor: PropertyDescriptor) {
+      const originalMethod = descriptor.value;
+
+      descriptor.value = async function (this: FirestoreService<any>, ...args: any[]): Promise<any> {
+        const collectionName = this.collectionName;
+        const timeoutMessage = `Timeout: La operación en "${collectionName}" tardó más de ${ms / 1000}s en responder.`;
+
+        return Promise.race([
+          originalMethod.apply(this, args),
+          new Promise<never>((_, reject) => {
+            setTimeout(() => reject(new Error(timeoutMessage)), ms);
+          })
+        ]);
+      };
+
+      return descriptor;
+    };
   }
 
   /**

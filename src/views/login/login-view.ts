@@ -74,9 +74,11 @@ export class LoginView extends LitElement {
       case "auth/user-not-found":
         return "No hay cuenta con ese email.";
       case "auth/wrong-password":
-        return "La contraseña es incorrecta.";
+      case "auth/invalid-credential":
+        return "La contraseña o el usuario es incorrecto.";
+      case "auth/quota-exceeded":
       case "auth/too-many-requests":
-        return "Demasiados intentos. Intentá más tarde.";
+        return "Demasiados intentos o cuota de verificación excedida. Intentá más tarde.";
       default:
         return "Error al conectar. Verificá tus datos e intentá de nuevo.";
     }

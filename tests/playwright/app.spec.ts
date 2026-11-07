@@ -103,51 +103,16 @@ async function createInspeccion(page: any) {
 }
 
 /**
- * Crea una cuenta nueva, cierra sesión y vuelve a iniciar sesión.
- * Retorna el email y password generados para uso posterior.
- */
-async function registerAndLogin(page: any, prefix: string) {
-  const testEmail = `${prefix}-${Date.now()}@example.com`;
-  const testPassword = 'password123';
-
-  // Crear cuenta (registerAccount espera la redirección a /apiarios internamente)
-  await page.goto('/');
-  await page.getByTestId('auth-toggle-mode').click();
-  await registerAccount(page, testEmail, testPassword);
-
-  // Cerrar sesión y volver a iniciar para usar el helper
-  await page.getByTestId('logout-btn').click();
-  await page.toHaveURLPath('/login');
-  // login() espera la redirección a /apiarios internamente
-  await login(page, testEmail, testPassword);
-
-  return { testEmail, testPassword };
-}
-
-// Credenciales compartidas para los tests de gestión
-const gestionEmail = 'gestion-shared@example.com';
-const gestionPassword = 'password123';
-
-/**
- * Asegura que la cuenta compartida de gestión existe y realiza login.
- * Intenta login primero; si falla (cuenta no existe), la crea.
+ * Crea un usuario único para cada test y realiza el registro/login.
+ * Garantiza aislamiento total entre tests concurrentes.
  */
 async function setupGestionUser(page: any) {
-  // Intentar login primero (funciona si la cuenta ya existe de un run anterior)
+  const userEmail = `gestion-${Math.random().toString(36).substring(2, 7)}@example.com`;
+  const userPassword = 'password123';
+
   await page.goto('/');
-  await page.getByWaInput('auth-email').fill(gestionEmail);
-  await page.getByWaInput('auth-password').fill(gestionPassword);
-  await page.getByTestId('auth-submit-btn').click();
-
-  // Si el login tuvo éxito, la página redirige a /apiarios
-  const currentUrl = page.url();
-  if (currentUrl.includes('/apiarios')) {
-    return;
-  }
-
-  // Login falló — la cuenta no existe aún, crearla
   await page.getByTestId('auth-toggle-mode').click();
-  await registerAccount(page, gestionEmail, gestionPassword);
+  await registerAccount(page, userEmail, userPassword);
 }
 
 test.describe('BeeKeep Application', () => {
@@ -409,7 +374,8 @@ test.describe('Conexión inestable / Latencia alta', () => {
     await setupGestionUser(page);
   });
 
-  test('debe manejar timeout con latencia alta y guardar localmente sin congelar la interfaz', async ({ page, context }) => {
+  test('debe manejar timeout con latencia alta y guardar localmente sin congelar la interfaz', async ({ page, context, browserName }) => {
+    test.skip(browserName !== 'chromium', 'CDP session is only available in Chromium');
     // Establecer sesión CDP para emular latencia alta (> 3s)
     const client = await context.newCDPSession(page);
     await client.send('Network.emulateNetworkConditions', {
