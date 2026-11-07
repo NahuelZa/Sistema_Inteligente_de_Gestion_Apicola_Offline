@@ -2,6 +2,7 @@ import { LitElement, html } from "lit";
 import { FeedbackController } from "../../controllers";
 import { customElement, state } from "lit/decorators.js";
 import { apiarioService, authService } from "../../services";
+import { EstadoModelo } from "../../models";
 import type { Apiario } from "../../models";
 import { ROUTES } from "../../constants";
 import { dispatchNavigate } from "../../utils";
@@ -37,7 +38,7 @@ export class FormularioApiario extends LitElement {
       nombre,
       ubicacion,
       notas,
-      estado: 'activo',
+      estado: EstadoModelo.ACTIVO,
       createdAtLocal: new Date().toISOString(),
     };
 

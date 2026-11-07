@@ -16,18 +16,31 @@ import {
 } from "firebase/firestore";
 import { db as defaultDb } from "../config/firebase";
 import { authService } from "./auth.service";
-import {EstadoModelo} from "../models";
+import { ModeloBase } from "../models";
 
 export type DocumentWithId<T> = T & { id: string, estaSincronizado?: boolean };
 
 /**
  * Clase genérica para abstraer y encapsular el acceso y operaciones con colecciones de Cloud Firestore.
  * Proporciona métodos CRUD, persistencia offline transparente y filtrado por usuario autenticado.
+ * 
+ * Los servicios concretos deben sobreescribir `createModel()` para retornar instancias de clases modelo
+ * en lugar de objetos planos, aprovechando el método `esActivo()` de ModeloBase.
  */
 export class FirestoreService<T extends DocumentData = DocumentData> {
   private static instances: Set<FirestoreService<any>> = new Set();
   protected readonly firestore: Firestore;
   protected readonly collectionName: string;
+
+  /**
+   * Crea una instancia de la clase modelo a partir de los datos crudos de Firestore.
+   * Los servicios concretos deben sobreescribir este método para retornar su clase modelo específica.
+   * @param raw Datos crudos del documento con su ID.
+   * @returns Instancia de la clase modelo correspondiente.
+   */
+  protected createModel(raw: T & { id: string }): ModeloBase {
+    return raw as unknown as ModeloBase;
+  }
 
   constructor(collectionName: string, firestoreInstance: Firestore = defaultDb) {
     if (!collectionName || collectionName.trim() === "") {
@@ -124,10 +137,11 @@ export class FirestoreService<T extends DocumentData = DocumentData> {
 
   /**
    * Obtiene todos los documentos de la colección pertenecientes al usuario actual (aislamiento multi-tenancy).
+   * Los mapea a instancias de clase modelo usando `createModel()`.
    * @param userId Identificador de usuario opcional para filtrar explícitamente.
-   * @returns Lista de documentos del usuario con sus respectivos IDs.
+   * @returns Lista de instancias de modelo del usuario con estado de sincronización.
    */
-  public async getAll(userId?: string): Promise<DocumentWithId<T>[]> {
+  public async getAll(userId?: string): Promise<ModeloBase[]> {
     const targetUserId = userId || authService.getCurrentUserId();
     if (!targetUserId) {
       throw new Error(`Operación rechazada: No se puede obtener "${this.collectionName}" sin usuario autenticado.`);
@@ -144,11 +158,15 @@ export class FirestoreService<T extends DocumentData = DocumentData> {
           createdQuery,
           { includeMetadataChanges: true },
           (snapshot) => {
-            const docs = snapshot.docs.map((docSnap) => ({
-              ...(docSnap.data() as T),
-              id: docSnap.id,
-              estaSincronizado: !docSnap.metadata.hasPendingWrites,
-            }));
+            const docs: ModeloBase[] = snapshot.docs.map((docSnap) => {
+              const rawData = {
+                ...(docSnap.data() as T),
+                id: docSnap.id,
+              };
+              const model = this.createModel(rawData);
+              model.marcarComoSincronizado(!docSnap.metadata.hasPendingWrites);
+              return model;
+            });
             resolve(docs);
           },
           reject
@@ -156,9 +174,16 @@ export class FirestoreService<T extends DocumentData = DocumentData> {
     });
   }
 
-  public async getAllActivos(userId?: string): Promise<DocumentWithId<T>[]> {
+  /**
+   * Obtiene todos los documentos activos de la colección.
+   * Utiliza el método esActivo() de ModeloBase para determinar si un documento está activo,
+   * permitiendo que cada modelo defina su propia lógica de negocio.
+   * @param userId Identificador de usuario opcional para filtrar explícitamente.
+   * @returns Lista de documentos activos del usuario.
+   */
+  public async getAllActivos(userId?: string): Promise<ModeloBase[]> {
     const todos = await this.getAll(userId);
-    return todos.filter(each => each.estado === EstadoModelo.ACTIVO);
+    return todos.filter(each => each.esActivo());
   }
 
   /**

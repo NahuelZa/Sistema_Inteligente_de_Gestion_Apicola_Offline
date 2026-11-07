@@ -1,5 +1,6 @@
 import { FirestoreService } from "./FirestoreService";
 import type { Inspeccion } from "../models";
+import { InspeccionModel, ModeloBase } from "../models";
 import { COLLECTIONS } from "../constants";
 
 /**
@@ -9,6 +10,10 @@ import { COLLECTIONS } from "../constants";
 export class InspeccionService extends FirestoreService<Inspeccion> {
   constructor() {
     super(COLLECTIONS.INSPECCIONES);
+  }
+
+  protected createModel(raw: Inspeccion & { id: string }): ModeloBase {
+    return new InspeccionModel(raw);
   }
 
   /**

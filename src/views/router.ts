@@ -16,7 +16,7 @@ import "./home/home-view";
 import "./login/login-view";
 import "./components/sync-indicator";
 import {customElement} from "lit/decorators.js";
-import {type Apiario, EstadoModelo} from "../models";
+import type {ModeloBase} from "../models";
 
 export type {ViewType};
 
@@ -267,8 +267,10 @@ export class AppRouter extends LitElement {
     }
 
     // TO-DO: mover a otro lugar
-    private apiariosActivos(): Apiario[] {
-        return this.apiariosController.value.filter(each => each.estado === EstadoModelo.ACTIVO);
+    private apiariosActivos(): ModeloBase[] {
+        return this.apiariosController.value.filter(
+            each => each.esActivo()
+        );
     }
 }
 

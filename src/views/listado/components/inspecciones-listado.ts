@@ -1,7 +1,7 @@
 import {html, LitElement, nothing} from "lit";
 import {customElement, state} from "lit/decorators.js";
-import type {DocumentWithId} from "../../../services";
-import type {Inspeccion, Colmena, Apiario} from "../../../models";
+import type {ModeloBase} from "../../../models";
+import type {Inspeccion} from "../../../models";
 import {inspeccionService, colmenaService, apiarioService} from "../../../services";
 import {ROUTES} from "../../../constants";
 import {dispatchNavigate} from "../../../utils";
@@ -17,11 +17,9 @@ export class InspeccionesListado extends LitElement {
 
   private feedback = new FeedbackController(this);
   private task: FirestoreController<Inspeccion> | null = null;
-  private listado = new ListadoController<DocumentWithId<Inspeccion>>(this, {
-    isInactive: (inspeccion) => inspeccion.anulada === true,
-  });
-  @state() private colmenas: DocumentWithId<Colmena>[] = [];
-  @state() private apiarios: DocumentWithId<Apiario>[] = [];
+  private listado = new ListadoController(this);
+  @state() private colmenas: ModeloBase[] = [];
+  @state() private apiarios: ModeloBase[] = [];
   @state() private deletingId: string | null = null;
 
   private readonly layoutConfig: ListadoLayoutConfig = {
@@ -68,7 +66,7 @@ export class InspeccionesListado extends LitElement {
     this.listado.toggleInactive(e.detail.showInactive);
   }
 
-  private async handleAnularInspeccion(inspeccion: DocumentWithId<Inspeccion>, motivo: string): Promise<void> {
+  private async handleAnularInspeccion(inspeccion: ModeloBase, motivo: string): Promise<void> {
     try {
       this.deletingId = inspeccion.id;
       await inspeccionService.anularInspeccion(inspeccion.id, motivo);
@@ -82,7 +80,7 @@ export class InspeccionesListado extends LitElement {
     }
   }
 
-  private renderItem(inspeccion: DocumentWithId<Inspeccion>) {
+  private renderItem(inspeccion: ModeloBase) {
     const deleting = this.deletingId === inspeccion.id;
     return html`
       <inspeccion-card
@@ -109,7 +107,7 @@ export class InspeccionesListado extends LitElement {
           @listado-retry=${this.handleRetry}
         ></listado-error>
       `,
-      complete: (items: DocumentWithId<Inspeccion>[]) => {
+      complete: (items: ModeloBase[]) => {
         const filtrados = this.listado.getFilteredItems(items);
 
         return html`

@@ -1,5 +1,5 @@
 import { FirestoreService } from "./FirestoreService";
-import {type Colmena, EstadoModelo} from "../models";
+import { type Colmena, ColmenaModel, ModeloBase, EstadoModelo } from "../models";
 import { COLLECTIONS } from "../constants";
 import { writeBatch, doc, collection, getDoc } from "firebase/firestore";
 import { db } from "../config/firebase";
@@ -25,6 +25,10 @@ export interface RegistrarTrasladoBatchDTO {
 export class ColmenaService extends FirestoreService<Colmena> {
   constructor() {
     super(COLLECTIONS.COLMENAS);
+  }
+
+  protected createModel(raw: Colmena & { id: string }): ModeloBase {
+    return new ColmenaModel(raw);
   }
 
   /**

@@ -1,7 +1,8 @@
 import { LitElement, html, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { trasladoService } from "../../services";
-import type { HistorialTraslado, Apiario } from "../../models";
+import type { Apiario } from "../../models";
+import { HistorialTrasladoModel } from "../../models";
 import type { DocumentWithId } from "../../services";
 
 /**
@@ -14,7 +15,7 @@ export class TrasladoTimeline extends LitElement {
   @property({ type: Array }) apiarios: DocumentWithId<Apiario>[] = [];
   @property({ type: Boolean }) loading = false;
 
-  private traslados: HistorialTraslado[] = [];
+  private traslados: HistorialTrasladoModel[] = [];
 
   override createRenderRoot() {
     return this;

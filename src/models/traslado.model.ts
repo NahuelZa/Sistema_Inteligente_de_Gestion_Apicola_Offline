@@ -1,3 +1,5 @@
+import { ModeloBase } from "./modeloBase";
+
 export interface HistorialTraslado {
   id?: string;
   userId?: string;
@@ -9,6 +11,34 @@ export interface HistorialTraslado {
   motivo: string;
   notas?: string;
   createdAtLocal: string;
+}
+
+export class HistorialTrasladoModel extends ModeloBase {
+  public colmenaId: string;
+  public numeroColmena?: string;
+  public apiarioOrigenId: string;
+  public apiarioDestinoId: string;
+  public fecha: string;
+  public motivo: string;
+  public notas?: string;
+
+  constructor(data: HistorialTraslado) {
+    super();
+    if (data.id) this.id = data.id;
+    this.userId = data.userId || '';
+    this.colmenaId = data.colmenaId;
+    this.numeroColmena = data.numeroColmena;
+    this.apiarioOrigenId = data.apiarioOrigenId;
+    this.apiarioDestinoId = data.apiarioDestinoId;
+    this.fecha = data.fecha;
+    this.motivo = data.motivo;
+    this.notas = data.notas;
+    this.createdAtLocal = data.createdAtLocal;
+  }
+
+  public esActivo(): boolean {
+    return true;
+  }
 }
 
 export interface MotivoTraslado {
