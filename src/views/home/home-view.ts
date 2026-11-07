@@ -6,7 +6,9 @@ import "@awesome.me/webawesome/dist/components/tab-group/tab-group.js";
 import "@awesome.me/webawesome/dist/components/tab/tab.js";
 import "@awesome.me/webawesome/dist/components/tab-panel/tab-panel.js";
 import "@awesome.me/webawesome/dist/components/icon/icon.js";
-import "../listado/listado-view";
+import "../listado/components/apiarios-listado";
+import "../listado/components/colmenas-listado";
+import "../listado/components/inspecciones-listado";
 
 /**
  * Vista principal de la aplicación BeeKeep.
@@ -80,17 +82,17 @@ export class HomeView extends LitElement {
                 </wa-tab>
                 <wa-tab-panel
                         name=${VIEWS.LISTADO_APIARIOS}>
-                    <listado-view type=${VIEWS.LISTADO_APIARIOS}></listado-view>
+                    <apiarios-listado></apiarios-listado>
                 </wa-tab-panel>
                 <wa-tab-panel
                         name=${VIEWS.LISTADO_COLMENAS}
                 >
-                    <listado-view type=${VIEWS.LISTADO_COLMENAS}></listado-view>
+                    <colmenas-listado></colmenas-listado>
                 </wa-tab-panel>
                 <wa-tab-panel
                         name=${VIEWS.LISTADO_INSPECCIONES}
                 >
-                    <listado-view type=${VIEWS.LISTADO_INSPECCIONES}></listado-view>
+                    <inspecciones-listado></inspecciones-listado>
                 </wa-tab-panel>
             </wa-tab-group>
         `;

@@ -13,7 +13,6 @@ import "./colmena/formulario-colmena";
 import "./colmena/formulario-traslado";
 import "./inspeccion/formulario-inspeccion";
 import "./home/home-view";
-import "./listado/listado-view";
 import "./login/login-view";
 import "./components/sync-indicator";
 import {customElement} from "lit/decorators.js";

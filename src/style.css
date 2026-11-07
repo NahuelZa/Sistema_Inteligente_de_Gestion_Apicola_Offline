@@ -44,7 +44,10 @@ formulario-apiario,
 formulario-colmena,
 formulario-inspeccion,
 formulario-traslado,
-listado-view {
+apiarios-listado,
+colmenas-listado,
+inspecciones-listado
+{
   display: block;
   width: 100%;
   max-width: 500px;
