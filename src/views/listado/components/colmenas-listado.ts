@@ -6,7 +6,10 @@ import {EstadoModelo} from "../../../models";
 import {colmenaService, apiarioService} from "../../../services";
 import {ROUTES} from "../../../constants";
 import {dispatchNavigate} from "../../../utils";
-import {FeedbackController, FirestoreController} from "../../../controllers";
+import {FeedbackController, FirestoreController, ListadoController} from "../../../controllers";
+import "./listado-layout";
+import type {ListadoLayoutConfig} from "./listado-layout";
+
 /**
  * Componente para listar y gestionar colmenas.
  */
@@ -15,9 +18,22 @@ export class ColmenasListado extends LitElement {
 
   private feedback = new FeedbackController(this);
   private task: FirestoreController<Colmena> | null = null;
+  private listado = new ListadoController<DocumentWithId<Colmena>>(this, {
+    isInactive: (colmena) => colmena.estado === EstadoModelo.INACTIVO,
+  });
   @state() private apiarios: DocumentWithId<Apiario>[] = [];
   @state() private deletingId: string | null = null;
-  @state() private mostrarInactivos = false;
+
+  private readonly layoutConfig: ListadoLayoutConfig = {
+    emptyIcon: "cube",
+    emptyTitle: "No hay colmenas registradas",
+    emptyDescription: "Registra tu primera colmena para comenzar el seguimiento.",
+    noActiveText: "No hay colmenas activas.",
+    newButtonText: "Nueva colmena",
+    newButtonTestId: "btn-nueva-colmena",
+    showInactiveLabel: "Mostrar inactivas",
+    showInactiveHint: "Incluye colmenas dadas de baja",
+  };
 
   override createRenderRoot() {
     return this;
@@ -39,26 +55,16 @@ export class ColmenasListado extends LitElement {
       .catch((error) => console.error("Error al cargar apiarios:", error));
   }
 
-  private isInactive(colmena: DocumentWithId<Colmena>): boolean {
-    return colmena.estado === EstadoModelo.INACTIVO;
-  }
-
-  private getFilteredItems(items: DocumentWithId<Colmena>[]): DocumentWithId<Colmena>[] {
-    return this.mostrarInactivos
-      ? items
-      : items.filter((item) => !this.isInactive(item));
-  }
-
-  private handleToggleInactive(e: CustomEvent): void {
-    this.mostrarInactivos = e.detail.showInactive;
-  }
-
   private handleCreate(): void {
     dispatchNavigate(this, ROUTES.COLMENA);
   }
 
   private handleRetry(): void {
     this.task?.loadDocuments();
+  }
+
+  private handleToggleInactive(e: CustomEvent): void {
+    this.listado.toggleInactive(e.detail.showInactive);
   }
 
   private async handleDelete(colmena: DocumentWithId<Colmena>): Promise<void> {
@@ -94,24 +100,16 @@ export class ColmenasListado extends LitElement {
     dispatchNavigate(this, `${ROUTES.TRASLADO}/${colmenaId}`);
   }
 
-  private renderItems(items: DocumentWithId<Colmena>[]) {
-    const filtrados = this.getFilteredItems(items);
-
+  private renderItem(colmena: DocumentWithId<Colmena>) {
+    const deleting = this.deletingId === colmena.id;
     return html`
-      <div class="wa-stack wa-gap-m">
-        ${filtrados.map((colmena) => {
-          const deleting = this.deletingId === colmena.id;
-          return html`
-            <colmena-card
-              .colmena=${colmena}
-              .apiarios=${this.apiarios}
-              .deleting=${deleting}
-              @delete=${(e: CustomEvent) => this.handleDelete(e.detail.colmena)}
-              @trasladar=${(e: CustomEvent) => this.handleTrasladarColmena(e.detail.colmenaId)}
-            ></colmena-card>
-          `;
-        })}
-      </div>
+      <colmena-card
+        .colmena=${colmena}
+        .apiarios=${this.apiarios}
+        .deleting=${deleting}
+        @delete=${(e: CustomEvent) => this.handleDelete(e.detail.colmena)}
+        @trasladar=${(e: CustomEvent) => this.handleTrasladarColmena(e.detail.colmenaId)}
+      ></colmena-card>
     `;
   }
 
@@ -130,56 +128,18 @@ export class ColmenasListado extends LitElement {
         ></listado-error>
       `,
       complete: (items: DocumentWithId<Colmena>[]) => {
-        const filtrados = this.getFilteredItems(items);
+        const filtrados = this.listado.getFilteredItems(items);
 
-        // Si no hay items en absoluto, mostrar estado vacío
-        if (items.length === 0) {
-          return html`
-            <listado-empty
-              .emptyIcon=${"cube"}
-              .emptyTitle=${"No hay colmenas registradas"}
-              .emptyDescription=${"Registra tu primera colmena para comenzar el seguimiento."}
-              .newButtonText=${"Nueva colmena"}
-              .newButtonTestId=${"btn-nueva-colmena"}
-              @listado-create=${this.handleCreate}
-            ></listado-empty>
-          `;
-        }
-
-        // Si no hay activas y el checkbox no está marcado, mostrar toolbar + empty sin activas
-        if (filtrados.length === 0 && !this.mostrarInactivos) {
-          return html`
-            <listado-toolbar
-              .newButtonText=${"Nueva colmena"}
-              .newButtonTestId=${"btn-nueva-colmena"}
-              .showInactiveLabel=${"Mostrar inactivas"}
-              .showInactiveHint=${"Incluye colmenas dadas de baja"}
-              @listado-create=${this.handleCreate}
-              @listado-toggle-inactive=${this.handleToggleInactive}
-            ></listado-toolbar>
-            <listado-empty
-              .emptyIcon=${"cube"}
-              .noActiveText=${"No hay colmenas activas."}
-              .newButtonText=${"Nueva colmena"}
-              .newButtonTestId=${"btn-nueva-colmena"}
-              .noActive=${true}
-              @listado-create=${this.handleCreate}
-            ></listado-empty>
-          `;
-        }
-
-        // Caso normal: toolbar + items
         return html`
-          <listado-toolbar
-            .newButtonText=${"Nueva colmena"}
-            .newButtonTestId=${"btn-nueva-colmena"}
-            .showInactiveLabel=${"Mostrar inactivas"}
-            .showInactiveHint=${"Incluye colmenas dadas de baja"}
-            .showInactive=${this.mostrarInactivos}
+          <listado-layout
+            .config=${this.layoutConfig}
+            .totalItems=${items.length}
+            .filteredItems=${filtrados}
+            .showInactive=${this.listado.mostrarInactivos}
+            .renderItem=${this.renderItem}
             @listado-create=${this.handleCreate}
             @listado-toggle-inactive=${this.handleToggleInactive}
-          ></listado-toolbar>
-          ${this.renderItems(items)}
+          ></listado-layout>
         `;
       },
     });

@@ -1,11 +1,12 @@
 import {html, LitElement, nothing} from "lit";
 import {customElement, state} from "lit/decorators.js";
 import type {DocumentWithId} from "../../../services";
-import type {Apiario} from "../../../models";
 import {apiarioService} from "../../../services";
+import {type Apiario, EstadoModelo} from "../../../models";
 import {ROUTES} from "../../../constants";
 import {dispatchNavigate} from "../../../utils";
-import {FeedbackController, FirestoreController} from "../../../controllers";
+import {FeedbackController, FirestoreController, ListadoController} from "../../../controllers";
+import type {ListadoLayoutConfig} from "./listado-layout";
 
 /**
  * Componente para listar y gestionar apiarios.
@@ -15,8 +16,21 @@ export class ApiariosListado extends LitElement {
 
   private feedback = new FeedbackController(this);
   private task: FirestoreController<Apiario> | null = null;
+  private listado = new ListadoController<DocumentWithId<Apiario>>(this, {
+    isInactive: (apiario) => apiario.estado === EstadoModelo.INACTIVO,
+  });
   @state() private deletingId: string | null = null;
-  @state() private mostrarInactivos = false;
+
+  private readonly layoutConfig: ListadoLayoutConfig = {
+    emptyIcon: "cubes-stacked",
+    emptyTitle: "No hay apiarios registrados",
+    emptyDescription: "Crea tu primer apiario para comenzar a gestionarlo.",
+    noActiveText: "No hay apiarios activos.",
+    newButtonText: "Nuevo apiario",
+    newButtonTestId: "btn-nuevo-apiario",
+    showInactiveLabel: "Mostrar inactivos",
+    showInactiveHint: "Incluye apiarios dados de baja",
+  };
 
   override createRenderRoot() {
     return this;
@@ -33,26 +47,16 @@ export class ApiariosListado extends LitElement {
     });
   }
 
-  private isInactive(apiario: DocumentWithId<Apiario>): boolean {
-    return apiario.estado === 'inactivo';
-  }
-
-  private getFilteredItems(items: DocumentWithId<Apiario>[]): DocumentWithId<Apiario>[] {
-    return this.mostrarInactivos
-      ? items
-      : items.filter((item) => !this.isInactive(item));
-  }
-
-  private handleToggleInactive(e: CustomEvent): void {
-    this.mostrarInactivos = e.detail.showInactive;
-  }
-
   private handleCreate(): void {
     dispatchNavigate(this, ROUTES.APIARIO);
   }
 
   private handleRetry(): void {
     this.task?.loadDocuments();
+  }
+
+  private handleToggleInactive(e: CustomEvent): void {
+    this.listado.toggleInactive(e.detail.showInactive);
   }
 
   private async handleDelete(apiario: DocumentWithId<Apiario>): Promise<void> {
@@ -84,22 +88,14 @@ export class ApiariosListado extends LitElement {
     }
   }
 
-  private renderItems(items: DocumentWithId<Apiario>[]) {
-    const filtrados = this.getFilteredItems(items);
-
+  private renderItem(apiario: DocumentWithId<Apiario>) {
+    const deleting = this.deletingId === apiario.id;
     return html`
-      <div class="wa-stack wa-gap-m">
-        ${filtrados.map((apiario) => {
-          const deleting = this.deletingId === apiario.id;
-          return html`
-            <apiario-card
-              .apiario=${apiario}
-              .deleting=${deleting}
-              @delete=${(e: CustomEvent) => this.handleDelete(e.detail.apiario)}
-            ></apiario-card>
-          `;
-        })}
-      </div>
+      <apiario-card
+        .apiario=${apiario}
+        .deleting=${deleting}
+        @delete=${(e: CustomEvent) => this.handleDelete(e.detail.apiario)}
+      ></apiario-card>
     `;
   }
 
@@ -118,56 +114,18 @@ export class ApiariosListado extends LitElement {
         ></listado-error>
       `,
       complete: (items: DocumentWithId<Apiario>[]) => {
-        const filtrados = this.getFilteredItems(items);
+        const filtrados = this.listado.getFilteredItems(items);
 
-        // Si no hay items en absoluto, mostrar estado vacío
-        if (items.length === 0) {
-          return html`
-            <listado-empty
-              .emptyIcon=${"cubes-stacked"}
-              .emptyTitle=${"No hay apiarios registrados"}
-              .emptyDescription=${"Crea tu primer apiario para comenzar a gestionarlo."}
-              .newButtonText=${"Nuevo apiario"}
-              .newButtonTestId=${"btn-nuevo-apiario"}
-              @listado-create=${this.handleCreate}
-            ></listado-empty>
-          `;
-        }
-
-        // Si no hay activos y el checkbox no está marcado, mostrar toolbar + empty sin activos
-        if (filtrados.length === 0 && !this.mostrarInactivos) {
-          return html`
-            <listado-toolbar
-              .newButtonText=${"Nuevo apiario"}
-              .newButtonTestId=${"btn-nuevo-apiario"}
-              .showInactiveLabel=${"Mostrar inactivos"}
-              .showInactiveHint=${"Incluye apiarios dados de baja"}
-              @listado-create=${this.handleCreate}
-              @listado-toggle-inactive=${this.handleToggleInactive}
-            ></listado-toolbar>
-            <listado-empty
-              .emptyIcon=${"cubes-stacked"}
-              .noActiveText=${"No hay apiarios activos."}
-              .newButtonText=${"Nuevo apiario"}
-              .newButtonTestId=${"btn-nuevo-apiario"}
-              .noActive=${true}
-              @listado-create=${this.handleCreate}
-            ></listado-empty>
-          `;
-        }
-
-        // Caso normal: toolbar + items
         return html`
-          <listado-toolbar
-            .newButtonText=${"Nuevo apiario"}
-            .newButtonTestId=${"btn-nuevo-apiario"}
-            .showInactiveLabel=${"Mostrar inactivos"}
-            .showInactiveHint=${"Incluye apiarios dados de baja"}
-            .showInactive=${this.mostrarInactivos}
+          <listado-layout
+            .config=${this.layoutConfig}
+            .totalItems=${items.length}
+            .filteredItems=${filtrados}
+            .showInactive=${this.listado.mostrarInactivos}
+            .renderItem=${this.renderItem}
             @listado-create=${this.handleCreate}
             @listado-toggle-inactive=${this.handleToggleInactive}
-          ></listado-toolbar>
-          ${this.renderItems(items)}
+          ></listado-layout>
         `;
       },
     });

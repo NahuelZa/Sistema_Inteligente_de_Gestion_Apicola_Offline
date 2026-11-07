@@ -5,7 +5,9 @@ import type {Inspeccion, Colmena, Apiario} from "../../../models";
 import {inspeccionService, colmenaService, apiarioService} from "../../../services";
 import {ROUTES} from "../../../constants";
 import {dispatchNavigate} from "../../../utils";
-import {FeedbackController, FirestoreController} from "../../../controllers";
+import {FeedbackController, FirestoreController, ListadoController} from "../../../controllers";
+import "./listado-layout";
+import type {ListadoLayoutConfig} from "./listado-layout";
 
 /**
  * Componente para listar y gestionar inspecciones.
@@ -15,10 +17,23 @@ export class InspeccionesListado extends LitElement {
 
   private feedback = new FeedbackController(this);
   private task: FirestoreController<Inspeccion> | null = null;
+  private listado = new ListadoController<DocumentWithId<Inspeccion>>(this, {
+    isInactive: (inspeccion) => inspeccion.anulada === true,
+  });
   @state() private colmenas: DocumentWithId<Colmena>[] = [];
   @state() private apiarios: DocumentWithId<Apiario>[] = [];
   @state() private deletingId: string | null = null;
-  @state() private mostrarInactivos = false;
+
+  private readonly layoutConfig: ListadoLayoutConfig = {
+    emptyIcon: "clipboard-check",
+    emptyTitle: "No hay inspecciones registradas",
+    emptyDescription: "Registra la primera revisión sanitaria de tus colmenas en campo.",
+    noActiveText: "No hay inspecciones activas.",
+    newButtonText: "Nueva inspección",
+    newButtonTestId: "btn-nueva-inspeccion",
+    showInactiveLabel: "Mostrar anuladas",
+    showInactiveHint: "Incluye inspecciones anuladas",
+  };
 
   override createRenderRoot() {
     return this;
@@ -41,26 +56,16 @@ export class InspeccionesListado extends LitElement {
       .catch((error) => console.error("Error al cargar datos:", error));
   }
 
-  private isInactive(inspeccion: DocumentWithId<Inspeccion>): boolean {
-    return inspeccion.anulada === true;
-  }
-
-  private getFilteredItems(items: DocumentWithId<Inspeccion>[]): DocumentWithId<Inspeccion>[] {
-    return this.mostrarInactivos
-      ? items
-      : items.filter((item) => !this.isInactive(item));
-  }
-
-  private handleToggleInactive(e: CustomEvent): void {
-    this.mostrarInactivos = e.detail.showInactive;
-  }
-
   private handleCreate(): void {
     dispatchNavigate(this, ROUTES.INSPECCION);
   }
 
   private handleRetry(): void {
     this.task?.loadDocuments();
+  }
+
+  private handleToggleInactive(e: CustomEvent): void {
+    this.listado.toggleInactive(e.detail.showInactive);
   }
 
   private async handleAnularInspeccion(inspeccion: DocumentWithId<Inspeccion>, motivo: string): Promise<void> {
@@ -77,24 +82,16 @@ export class InspeccionesListado extends LitElement {
     }
   }
 
-  private renderItems(items: DocumentWithId<Inspeccion>[]) {
-    const filtrados = this.getFilteredItems(items);
-
+  private renderItem(inspeccion: DocumentWithId<Inspeccion>) {
+    const deleting = this.deletingId === inspeccion.id;
     return html`
-      <div class="wa-stack wa-gap-m">
-        ${filtrados.map((inspeccion) => {
-          const deleting = this.deletingId === inspeccion.id;
-          return html`
-            <inspeccion-card
-              .inspeccion=${inspeccion}
-              .colmenas=${this.colmenas}
-              .apiarios=${this.apiarios}
-              .deleting=${deleting}
-              @anular=${(e: CustomEvent) => this.handleAnularInspeccion(e.detail.inspeccion, e.detail.motivo)}
-            ></inspeccion-card>
-          `;
-        })}
-      </div>
+      <inspeccion-card
+        .inspeccion=${inspeccion}
+        .colmenas=${this.colmenas}
+        .apiarios=${this.apiarios}
+        .deleting=${deleting}
+        @anular=${(e: CustomEvent) => this.handleAnularInspeccion(e.detail.inspeccion, e.detail.motivo)}
+      ></inspeccion-card>
     `;
   }
 
@@ -113,56 +110,18 @@ export class InspeccionesListado extends LitElement {
         ></listado-error>
       `,
       complete: (items: DocumentWithId<Inspeccion>[]) => {
-        const filtrados = this.getFilteredItems(items);
+        const filtrados = this.listado.getFilteredItems(items);
 
-        // Si no hay items en absoluto, mostrar estado vacío
-        if (items.length === 0) {
-          return html`
-            <listado-empty
-              .emptyIcon=${"clipboard-check"}
-              .emptyTitle=${"No hay inspecciones registradas"}
-              .emptyDescription=${"Registra la primera revisión sanitaria de tus colmenas en campo."}
-              .newButtonText=${"Nueva inspección"}
-              .newButtonTestId=${"btn-nueva-inspeccion"}
-              @listado-create=${this.handleCreate}
-            ></listado-empty>
-          `;
-        }
-
-        // Si no hay activas y el checkbox no está marcado, mostrar toolbar + empty sin activas
-        if (filtrados.length === 0 && !this.mostrarInactivos) {
-          return html`
-            <listado-toolbar
-              .newButtonText=${"Nueva inspección"}
-              .newButtonTestId=${"btn-nueva-inspeccion"}
-              .showInactiveLabel=${"Mostrar anuladas"}
-              .showInactiveHint=${"Incluye inspecciones anuladas"}
-              @listado-create=${this.handleCreate}
-              @listado-toggle-inactive=${this.handleToggleInactive}
-            ></listado-toolbar>
-            <listado-empty
-              .emptyIcon=${"clipboard-check"}
-              .noActiveText=${"No hay inspecciones activas."}
-              .newButtonText=${"Nueva inspección"}
-              .newButtonTestId=${"btn-nueva-inspeccion"}
-              .noActive=${true}
-              @listado-create=${this.handleCreate}
-            ></listado-empty>
-          `;
-        }
-
-        // Caso normal: toolbar + items
         return html`
-          <listado-toolbar
-            .newButtonText=${"Nueva inspección"}
-            .newButtonTestId=${"btn-nueva-inspeccion"}
-            .showInactiveLabel=${"Mostrar anuladas"}
-            .showInactiveHint=${"Incluye inspecciones anuladas"}
-            .showInactive=${this.mostrarInactivos}
+          <listado-layout
+            .config=${this.layoutConfig}
+            .totalItems=${items.length}
+            .filteredItems=${filtrados}
+            .showInactive=${this.listado.mostrarInactivos}
+            .renderItem=${this.renderItem}
             @listado-create=${this.handleCreate}
             @listado-toggle-inactive=${this.handleToggleInactive}
-          ></listado-toolbar>
-          ${this.renderItems(items)}
+          ></listado-layout>
         `;
       },
     });
