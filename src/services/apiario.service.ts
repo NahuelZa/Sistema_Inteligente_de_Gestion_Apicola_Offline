@@ -1,6 +1,8 @@
 import { FirestoreService } from "./FirestoreService";
-import type { Apiario } from "../models/apiario.model";
+import type { Apiario } from "../models";
 import { COLLECTIONS } from "../constants";
+import { colmenaService } from "./colmena.service";
+import {EstadoModelo} from "../models";
 
 export class ApiarioService extends FirestoreService<Apiario> {
   constructor() {
@@ -10,10 +12,16 @@ export class ApiarioService extends FirestoreService<Apiario> {
   /**
    * Inactiva un apiario sin borrarlo físicamente (soft-delete).
    * Preserva las colmenas e inspecciones históricas asociadas.
+   * No permite inactivar si el apiario aún tiene colmenas activas.
    * @param id Identificador del apiario a inactivar.
    */
   public async inactivar(id: string): Promise<void> {
-    await this.update(id, { estado: 'inactivo' });
+    const colmenasActivas = await colmenaService.getAllActivos();
+    const tieneColmenasActivas = colmenasActivas.some(c => c.apiarioId === id);
+    if (tieneColmenasActivas) {
+      throw new Error("No se puede archivar el apiario mientras tenga colmenas activas.");
+    }
+    await this.update(id, { estado: EstadoModelo.INACTIVO });
   }
 
   /**
@@ -21,7 +29,7 @@ export class ApiarioService extends FirestoreService<Apiario> {
    * @param id Identificador del apiario a reactivar.
    */
   public async reactivar(id: string): Promise<void> {
-    await this.update(id, { estado: 'activo' });
+    await this.update(id, { estado: EstadoModelo.ACTIVO });
   }
 }
 
