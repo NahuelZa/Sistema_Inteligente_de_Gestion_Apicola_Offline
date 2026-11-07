@@ -179,7 +179,7 @@ export class ListadoView extends LitElement {
                   <h3 class="wa-heading-m" style="margin: 0;">No hay apiarios registrados</h3>
                   <p class="wa-body-s wa-color-text-quiet" style="margin: 0;">Crea tu primer apiario para comenzar a gestionarlo.</p>
                 </div>
-                <wa-button id="btn-nuevo-apiario-empty" variant="brand" appearance="accent" size="medium" @click=${() => this.navigateTo(ROUTES.APIARIO)}>
+                <wa-button id="btn-nuevo-apiario-empty" data-testid="btn-nuevo-apiario" variant="brand" appearance="accent" size="medium" @click=${() => this.navigateTo(ROUTES.APIARIO)}>
                   <wa-icon slot="start" name="circle-plus"></wa-icon>
                   Nuevo apiario
                 </wa-button>
@@ -200,6 +200,7 @@ export class ListadoView extends LitElement {
             </wa-checkbox>
             <wa-button
               id="btn-nuevo-apiario"
+              data-testid="btn-nuevo-apiario"
               variant="brand"
               appearance="accent"
               size="medium"
@@ -262,7 +263,7 @@ export class ListadoView extends LitElement {
                   <h3 class="wa-heading-m" style="margin: 0;">No hay colmenas registradas</h3>
                   <p class="wa-body-s wa-color-text-quiet" style="margin: 0;">Registra tu primera colmena para comenzar el seguimiento.</p>
                 </div>
-                <wa-button id="btn-nueva-colmena-empty" variant="brand" appearance="accent" size="medium" @click=${() => this.navigateTo(ROUTES.COLMENA)}>
+                <wa-button id="btn-nueva-colmena-empty" data-testid="btn-nueva-colmena" variant="brand" appearance="accent" size="medium" @click=${() => this.navigateTo(ROUTES.COLMENA)}>
                   <wa-icon slot="start" name="circle-plus"></wa-icon>
                   Nueva colmena
                 </wa-button>
@@ -283,6 +284,7 @@ export class ListadoView extends LitElement {
             </wa-checkbox>
             <wa-button
               id="btn-nueva-colmena"
+              data-testid="btn-nueva-colmena"
               variant="brand"
               appearance="accent"
               size="medium"
@@ -347,7 +349,7 @@ export class ListadoView extends LitElement {
                   <h3 class="wa-heading-m" style="margin: 0;">No hay inspecciones registradas</h3>
                   <p class="wa-body-s wa-color-text-quiet" style="margin: 0;">Registra la primera revisión sanitaria de tus colmenas en campo.</p>
                 </div>
-                <wa-button id="btn-nueva-inspeccion-empty" variant="brand" appearance="accent" size="medium" @click=${() => this.navigateTo(ROUTES.INSPECCION)}>
+                <wa-button id="btn-nueva-inspeccion-empty" data-testid="btn-nueva-inspeccion" variant="brand" appearance="accent" size="medium" @click=${() => this.navigateTo(ROUTES.INSPECCION)}>
                   <wa-icon slot="start" name="circle-plus"></wa-icon>
                   Nueva inspección
                 </wa-button>
@@ -368,6 +370,7 @@ export class ListadoView extends LitElement {
             </wa-checkbox>
             <wa-button
               id="btn-nueva-inspeccion"
+              data-testid="btn-nueva-inspeccion"
               variant="brand"
               appearance="accent"
               size="medium"

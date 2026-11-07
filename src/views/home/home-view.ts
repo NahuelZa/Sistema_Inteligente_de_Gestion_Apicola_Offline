@@ -52,6 +52,7 @@ export class HomeView extends LitElement {
                         slot="nav"
                         panel=${VIEWS.LISTADO_APIARIOS}
                         id="tab-apiarios"
+                        data-testid="tab-apiarios"
                         class="wa-font-weight-semibold"
                 >
                     <wa-icon name="cubes-stacked" style="margin-right: var(--wa-space-xs);"></wa-icon>
@@ -61,6 +62,7 @@ export class HomeView extends LitElement {
                         slot="nav"
                         panel=${VIEWS.LISTADO_COLMENAS}
                         id="tab-colmenas"
+                        data-testid="tab-colmenas"
                         class="wa-font-weight-semibold"
                 >
                     <wa-icon name="cube" style="margin-right: var(--wa-space-xs);"></wa-icon>
@@ -70,6 +72,7 @@ export class HomeView extends LitElement {
                         slot="nav"
                         panel=${VIEWS.LISTADO_INSPECCIONES}
                         id="tab-inspecciones"
+                        data-testid="tab-inspecciones"
                         class="wa-font-weight-semibold"
                 >
                     <wa-icon name="clipboard-check" style="margin-right: var(--wa-space-xs);"></wa-icon>

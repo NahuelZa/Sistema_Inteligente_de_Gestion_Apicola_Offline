@@ -69,10 +69,11 @@ export class FormularioApiario extends LitElement {
 
   override render() {
     return html`
-      <form id="form-nuevo-apiario" class="beekeep-form" @submit=${this.handleSubmit}>
+      <form id="form-nuevo-apiario" data-testid="form-nuevo-apiario" class="beekeep-form" @submit=${this.handleSubmit}>
         <div class="form-group">
           <wa-input
             id="apiario-nombre"
+            data-testid="apiario-nombre"
             name="nombre"
             placeholder="Nombre del apiario"
             required
@@ -88,6 +89,7 @@ export class FormularioApiario extends LitElement {
         <div class="form-group">
           <wa-input
             id="apiario-ubicacion"
+            data-testid="apiario-ubicacion"
             name="ubicacion"
             label="Ubicación"
             placeholder="Ubicación o referencia"
@@ -100,6 +102,7 @@ export class FormularioApiario extends LitElement {
         <div class="form-group">
           <wa-textarea
             id="apiario-descripcion"
+            data-testid="apiario-descripcion"
             name="notas"
             label="Descripción / Notas"
             placeholder="Descripción o notas del terreno..."
@@ -109,13 +112,14 @@ export class FormularioApiario extends LitElement {
           </wa-textarea>
         </div>
 
-        <div id="apiario-feedback" class="feedback-container" aria-live="polite">
+        <div id="apiario-feedback" data-testid="apiario-feedback" class="feedback-container" aria-live="polite">
           ${this.feedback.render()}
         </div>
 
         <div class="form-actions" style="display: flex; gap: var(--wa-space-s);">
           <wa-button
             id="apiario-submit-btn"
+            data-testid="apiario-submit-btn"
             type="submit"
             variant="brand"
             appearance="accent"
@@ -127,6 +131,7 @@ export class FormularioApiario extends LitElement {
           </wa-button>
           <wa-button
             id="apiario-cancel-btn"
+            data-testid="apiario-cancel-btn"
             type="button"
             variant="neutral"
             appearance="outlined"

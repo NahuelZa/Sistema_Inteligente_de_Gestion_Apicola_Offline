@@ -112,10 +112,11 @@ export class FormularioInspeccion extends LitElement {
 
   override render() {
     return html`
-      <form id="form-nueva-inspeccion" class="beekeep-form" @submit=${this.handleSubmit}>
+      <form id="form-nueva-inspeccion" data-testid="form-nueva-inspeccion" class="beekeep-form" @submit=${this.handleSubmit}>
         <div class="form-group">
           <wa-select
             id="inspeccion-colmena"
+            data-testid="inspeccion-colmena"
             name="colmenaId"
             placeholder="Seleccione la colmena a revisar"
             required
@@ -135,6 +136,7 @@ export class FormularioInspeccion extends LitElement {
         <div class="form-group">
           <wa-input
             id="inspeccion-fecha"
+            data-testid="inspeccion-fecha"
             name="fecha"
             type="date"
             label="Fecha de la inspección"
@@ -147,6 +149,7 @@ export class FormularioInspeccion extends LitElement {
         <div class="form-group">
           <wa-select
             id="inspeccion-poblacion"
+            data-testid="inspeccion-poblacion"
             name="poblacion"
             value="media"
             size="medium"
@@ -160,11 +163,11 @@ export class FormularioInspeccion extends LitElement {
         </div>
 
         <div class="form-group" style="display: flex; flex-direction: column; gap: var(--wa-space-s); padding: var(--wa-space-s) 0;">
-          <wa-checkbox id="inspeccion-reina" name="reinaVista" size="large">
+          <wa-checkbox id="inspeccion-reina" data-testid="inspeccion-reina" name="reinaVista" size="large">
             <span style="font-weight: var(--wa-font-weight-medium); font-size: 1.05rem;">👑 Reina vista</span>
           </wa-checkbox>
 
-          <wa-checkbox id="inspeccion-postura" name="tienePostura" size="large">
+          <wa-checkbox id="inspeccion-postura" data-testid="inspeccion-postura" name="tienePostura" size="large">
             <span style="font-weight: var(--wa-font-weight-medium); font-size: 1.05rem;">🥚 Tiene postura / Cría presente</span>
           </wa-checkbox>
         </div>
@@ -172,6 +175,7 @@ export class FormularioInspeccion extends LitElement {
         <div class="form-group">
           <wa-select
             id="inspeccion-sanidad"
+            data-testid="inspeccion-sanidad"
             name="estadoSanitario"
             value="bueno"
             size="medium"
@@ -187,6 +191,7 @@ export class FormularioInspeccion extends LitElement {
         <div class="form-group">
           <wa-input
             id="inspeccion-enfermedades"
+            data-testid="inspeccion-enfermedades"
             name="enfermedadesDetectadas"
             placeholder="Ej: Varroa, Loque americana, etc."
             with-clear
@@ -199,6 +204,7 @@ export class FormularioInspeccion extends LitElement {
         <div class="form-group">
           <wa-textarea
             id="inspeccion-notas"
+            data-testid="inspeccion-notas"
             name="notas"
             label="Notas y observaciones de campo"
             placeholder="Escribí las observaciones sanitarias o de manejo..."
@@ -207,13 +213,14 @@ export class FormularioInspeccion extends LitElement {
           ></wa-textarea>
         </div>
 
-        <div id="inspeccion-feedback" class="feedback-container" aria-live="polite">
+        <div id="inspeccion-feedback" data-testid="inspeccion-feedback" class="feedback-container" aria-live="polite">
           ${this.feedback.render()}
         </div>
 
         <div class="form-actions" style="display: flex; gap: var(--wa-space-s);">
           <wa-button
             id="inspeccion-submit-btn"
+            data-testid="inspeccion-submit-btn"
             type="submit"
             variant="brand"
             appearance="accent"
@@ -225,6 +232,7 @@ export class FormularioInspeccion extends LitElement {
           </wa-button>
           <wa-button
             id="inspeccion-cancel-btn"
+            data-testid="inspeccion-cancel-btn"
             type="button"
             variant="neutral"
             appearance="outlined"

@@ -87,9 +87,9 @@ export class FormularioColmena extends LitElement {
 
   override render() {
     return html`
-      <form id="form-nueva-colmena" class="beekeep-form" @submit=${this.handleSubmit}>
+      <form id="form-nueva-colmena" data-testid="form-nueva-colmena" class="beekeep-form" @submit=${this.handleSubmit}>
         <div class="form-group">
-          <wa-select id="colmena-apiario" name="apiarioId" placeholder="Seleccione un apiario" required with-clear size="medium">
+          <wa-select id="colmena-apiario" data-testid="colmena-apiario" name="apiarioId" placeholder="Seleccione un apiario" required with-clear size="medium">
             <span slot="label" class="field-label">Apiario</span>
             ${this.apiarios.map(
               (a) => html`<wa-option value=${a.id}>${a.nombre}</wa-option>`
@@ -98,30 +98,31 @@ export class FormularioColmena extends LitElement {
         </div>
 
         <div class="form-group">
-          <wa-input id="colmena-numero" name="numeroColmena" placeholder="Ej: COL-014" required with-clear size="medium">
+          <wa-input id="colmena-numero" data-testid="colmena-numero" name="numeroColmena" placeholder="Ej: COL-014" required with-clear size="medium">
             <span slot="label" class="field-label">Número de colmena</span>
           </wa-input>
         </div>
 
         <div class="form-group">
-          <wa-input id="colmena-fecha" name="fechaAlta" type="date" label="Fecha de alta" value=${this.today} size="medium" required></wa-input>
+          <wa-input id="colmena-fecha" data-testid="colmena-fecha" name="fechaAlta" type="date" label="Fecha de alta" value=${this.today} size="medium" required></wa-input>
         </div>
 
         <div class="form-group">
-          <wa-textarea id="colmena-notas" name="notas" label="Notas" placeholder="Escribí o dictá la observación..." rows="3" size="medium"></wa-textarea>
+          <wa-textarea id="colmena-notas" data-testid="colmena-notas" name="notas" label="Notas" placeholder="Escribí o dictá la observación..." rows="3" size="medium"></wa-textarea>
         </div>
 
-        <div id="colmena-feedback" class="feedback-container" aria-live="polite">
+        <div id="colmena-feedback" data-testid="colmena-feedback" class="feedback-container" aria-live="polite">
           ${this.feedback.render()}
         </div>
 
         <div class="form-actions" style="display: flex; gap: var(--wa-space-s);">
-          <wa-button id="colmena-submit-btn" type="submit" variant="brand" appearance="accent" class="beekeep-btn-submit" ?loading=${this.loading}>
+          <wa-button id="colmena-submit-btn" data-testid="colmena-submit-btn" type="submit" variant="brand" appearance="accent" class="beekeep-btn-submit" ?loading=${this.loading}>
             <wa-icon slot="start" name="circle-check"></wa-icon>
             Guardar
           </wa-button>
           <wa-button
             id="colmena-cancel-btn"
+            data-testid="colmena-cancel-btn"
             type="button"
             variant="neutral"
             appearance="outlined"
