@@ -1,19 +1,36 @@
 import { nothing, type ReactiveController, type ReactiveControllerHost } from "lit";
 import {type DocumentData, type Unsubscribe, type WithFieldValue} from "firebase/firestore";
-import {type FirestoreService, type DocumentWithId, authService} from "../services";
+import {type FirestoreService, SyncListener} from "../services";
+import { ModeloBase } from "../models";
 
 export type TaskStatus = "initial" | "pending" | "complete" | "error";
 
-export interface FirestoreControllerOptions<T> {
+/**
+ * Opciones de carga del controller.
+ */
+export interface FirestoreLoadOptions {
   autoLoad?: boolean;
-  onSuccess?: (data: DocumentWithId<T>[]) => void;
+}
+
+/**
+ * Callbacks de resultado de operaciones del controller.
+ */
+export interface FirestoreCallbacks {
+  onSuccess?: (data: ModeloBase[]) => void;
   onError?: (error: unknown) => void;
 }
 
-export interface FirestoreRenderOptions<T> {
+/**
+ * Opciones combinadas para FirestoreController: carga + callbacks.
+ * Cada cliente puede usar solo la interfaz que necesita (ISP).
+ */
+export interface FirestoreControllerOptions extends FirestoreLoadOptions, FirestoreCallbacks {
+}
+
+export interface FirestoreRenderOptions {
   initial?: () => unknown;
   pending?: () => unknown;
-  complete?: (data: DocumentWithId<T>[]) => unknown;
+  complete?: (data: ModeloBase[]) => unknown;
   error?: (error: unknown) => unknown;
 }
 
@@ -24,18 +41,18 @@ export interface FirestoreRenderOptions<T> {
 export class FirestoreController<T extends DocumentData = DocumentData> implements ReactiveController {
   private host: ReactiveControllerHost;
   private service: FirestoreService<T>;
-  private options: FirestoreControllerOptions<T>;
+  private options: FirestoreControllerOptions;
   private currentRunId = 0;
   private unsubSync: Unsubscribe | null = null;
 
   public status: TaskStatus = "initial";
-  public value: DocumentWithId<T>[] = [];
+  public value: ModeloBase[] = [];
   public error: unknown = null;
 
   constructor(
     host: ReactiveControllerHost,
     service: FirestoreService<T>,
-    options: FirestoreControllerOptions<T> = {}
+    options: FirestoreControllerOptions = {}
   ) {
     this.host = host;
     this.service = service;
@@ -54,11 +71,17 @@ export class FirestoreController<T extends DocumentData = DocumentData> implemen
   }
 
   private async loadAndAddListeners() {
-    await authService.isAuthenticated();
+    const auth = this.service.getAuthProvider();
+    await auth.isAuthenticated();
     await this.loadDocuments();
-    const userId = authService.getCurrentUserId();
+    const userId = auth.getCurrentUserId();
     if (userId) {
-      this.unsubSync = this.service.onSynced(userId, () => this.loadDocuments());
+      const syncListener = new SyncListener(this.service.getFirestore());
+      this.unsubSync = syncListener.onSynced(
+        this.service.getCollectionName(),
+        userId,
+        () => this.loadDocuments()
+      );
     }
   }
 
@@ -73,7 +96,7 @@ export class FirestoreController<T extends DocumentData = DocumentData> implemen
    * Ejecuta la carga asíncrona de todos los documentos de la colección.
    * Maneja condiciones de carrera ignorando respuestas obsoletas.
    */
-  public async loadDocuments(): Promise<DocumentWithId<T>[]> {
+  public async loadDocuments(): Promise<ModeloBase[]> {
     const runId = ++this.currentRunId;
     this.status = "pending";
     this.error = null;
@@ -114,7 +137,7 @@ export class FirestoreController<T extends DocumentData = DocumentData> implemen
   /**
    * Renderiza condicionalmente según el estado de la tarea asíncrona.
    */
-  public render(renderers: FirestoreRenderOptions<T>): unknown {
+  public render(renderers: FirestoreRenderOptions): unknown {
     switch (this.status) {
       case "initial":
         return renderers.initial ? renderers.initial() : (renderers.pending ? renderers.pending() : nothing);

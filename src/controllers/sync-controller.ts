@@ -2,7 +2,7 @@ import { type ReactiveController, type ReactiveControllerHost } from "lit";
 import { waitForPendingWrites, enableNetwork, type Unsubscribe } from "firebase/firestore";
 import { onAuthStateChanged, type Unsubscribe as AuthUnsubscribe } from "firebase/auth";
 import { db, auth } from "../config/firebase";
-import { FirestoreService } from "../services";
+import { FirestoreService, SyncListener } from "../services";
 
 export interface SyncState {
   isOnline: boolean;
@@ -90,17 +90,22 @@ export class SyncController implements ReactiveController {
 
     services.forEach((service) => {
       try {
-        const unsubscribe = service.onPendingWritesChange(userId, (hasPendingChanges) => {
-          if (hasPendingChanges) {
-            this.pendingCollections.push(service.getCollectionName());
-          } else {
-            this.pendingCollections = this.pendingCollections.filter(name => name !== service.getCollectionName());
-          }
+        const syncListener = new SyncListener(service.getFirestore());
+        const unsubscribe = syncListener.onPendingWritesChange(
+          service.getCollectionName(),
+          userId,
+          (hasPendingChanges) => {
+            if (hasPendingChanges) {
+              this.pendingCollections.push(service.getCollectionName());
+            } else {
+              this.pendingCollections = this.pendingCollections.filter(name => name !== service.getCollectionName());
+            }
 
-          this.updateState({
-            hasPendingWrites : this.pendingCollections.length > 0,
-          });
-        });
+            this.updateState({
+              hasPendingWrites : this.pendingCollections.length > 0,
+            });
+          }
+        );
         this.snapshotUnsubscribes.push(unsubscribe);
       } catch (err) {
         console.error(`Error configurando listener para ${service.getCollectionName()}:`, err);

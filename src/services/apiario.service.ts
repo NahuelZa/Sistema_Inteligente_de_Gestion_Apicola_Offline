@@ -1,12 +1,16 @@
 import { FirestoreService } from "./FirestoreService";
 import type { Apiario } from "../models";
+import { ApiarioModel, ColmenaModel, ModeloBase, EstadoModelo } from "../models";
 import { COLLECTIONS } from "../constants";
 import { colmenaService } from "./colmena.service";
-import {EstadoModelo} from "../models";
 
 export class ApiarioService extends FirestoreService<Apiario> {
   constructor() {
     super(COLLECTIONS.APIARIOS);
+  }
+
+  protected createModel(raw: Apiario & { id: string }): ModeloBase {
+    return new ApiarioModel(raw);
   }
 
   /**
@@ -17,7 +21,7 @@ export class ApiarioService extends FirestoreService<Apiario> {
    */
   public async inactivar(id: string): Promise<void> {
     const colmenasActivas = await colmenaService.getAllActivos();
-    const tieneColmenasActivas = colmenasActivas.some(c => c.apiarioId === id);
+    const tieneColmenasActivas = colmenasActivas.some(c => (c as ColmenaModel).apiarioId === id);
     if (tieneColmenasActivas) {
       throw new Error("No se puede archivar el apiario mientras tenga colmenas activas.");
     }

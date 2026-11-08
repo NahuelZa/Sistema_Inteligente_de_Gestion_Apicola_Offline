@@ -2,7 +2,7 @@ import { LitElement, html } from "lit";
 import { FeedbackController } from "../../controllers";
 import { customElement, state } from "lit/decorators.js";
 import { apiarioService, authService } from "../../services";
-import { EstadoModelo, type Apiario } from "../../models";
+import {type Apiario, EstadoModelo} from "../../models";
 import { ROUTES } from "../../constants";
 import { dispatchNavigate } from "../../utils";
 

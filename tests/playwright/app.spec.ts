@@ -36,14 +36,18 @@ async function createApiario(page: any, nombre: string) {
 }
 
 /**
- * Crea una colmena seleccionando el primer apiario disponible y verifica el mensaje de éxito.
+ * Crea una colmena seleccionando el apiario indicado (o el primero disponible) y verifica el mensaje de éxito.
  */
-async function createColmena(page: any, numero: string) {
+async function createColmena(page: any, numero: string, apiarioNombre?: string) {
   await page.getByTestId('btn-nueva-colmena').click();
   await page.toHaveURLPath('/colmena');
 
   await page.getByTestId('colmena-apiario').click();
-  await page.getByRole('option').first().click();
+  if (apiarioNombre) {
+    await page.getByRole('option', { name: apiarioNombre }).click();
+  } else {
+    await page.getByRole('option').first().click();
+  }
   await page.getByWaInput('colmena-numero').fill(numero);
   await page.getByTestId('colmena-notas').locator('textarea').fill('Notas de prueba');
 
@@ -54,6 +58,31 @@ async function createColmena(page: any, numero: string) {
 
   // Volver al listado para que las pestañas estén disponibles
   await page.getByTestId('colmena-cancel-btn').click();
+  await page.toHaveURLPath('/colmenas');
+}
+
+/**
+ * Realiza el traslado de una colmena seleccionando el apiario de destino y el motivo.
+ */
+async function trasladarColmena(page: any, apiarioDestino: string, motivo: string = 'Floración / Trashumancia', notas?: string) {
+  await page.getByTestId('traslado-destino').click();
+  await page.getByRole('option', { name: apiarioDestino }).click();
+
+  await page.getByTestId('traslado-motivo').click();
+  await page.getByRole('option', { name: motivo }).click();
+
+  if (notas) {
+    await page.getByTestId('traslado-notas').locator('textarea').fill(notas);
+  }
+
+  await page.getByTestId('traslado-submit-btn').click();
+  await page.getByTestId('traslado-feedback').waitFor({ timeout: 10000 });
+  const feedback = await page.getByTestId('traslado-feedback').textContent();
+  expect(feedback).toContain('trasladada');
+  expect(feedback).toContain(apiarioDestino);
+
+  // Volver al listado para que las pestañas estén disponibles
+  await page.getByTestId('traslado-cancel-btn').click();
   await page.toHaveURLPath('/colmenas');
 }
 
@@ -90,31 +119,17 @@ async function createInspeccion(page: any) {
   await page.toHaveURLPath('/inspecciones');
 }
 
-
-// Credenciales compartidas para los tests de gestión
-const gestionEmail = 'gestion-shared@example.com';
-const gestionPassword = 'password123';
-
 /**
- * Asegura que la cuenta compartida de gestión existe y realiza login.
- * Intenta login primero; si falla (cuenta no existe), la crea.
+ * Crea un usuario único para cada test y realiza el registro/login.
+ * Garantiza aislamiento total entre tests concurrentes.
  */
 async function setupGestionUser(page: any) {
-  // Intentar login primero (funciona si la cuenta ya existe de un run anterior)
+  const userEmail = `gestion-${Math.random().toString(36).substring(2, 7)}@example.com`;
+  const userPassword = 'password123';
+
   await page.goto('/');
-  await page.getByWaInput('auth-email').fill(gestionEmail);
-  await page.getByWaInput('auth-password').fill(gestionPassword);
-  await page.getByTestId('auth-submit-btn').click();
-
-  // Si el login tuvo éxito, la página redirige a /apiarios
-  const currentUrl = page.url();
-  if (currentUrl.includes('/apiarios')) {
-    return;
-  }
-
-  // Login falló — la cuenta no existe aún, crearla
   await page.getByTestId('auth-toggle-mode').click();
-  await registerAccount(page, gestionEmail, gestionPassword);
+  await registerAccount(page, userEmail, userPassword);
 }
 
 test.describe('BeeKeep Application', () => {
@@ -179,6 +194,10 @@ test.describe('Gestión de Apiarios, Colmenas e Inspecciones', () => {
     // Crear el apiario usando el helper
     const apiarioNombre = `Apiario Test ${Date.now()}`;
     await createApiario(page, apiarioNombre);
+
+    // Verificar que al volver a la vista anterior se muestra en el listado
+    const apiarioCard = page.locator('apiario-card').filter({ hasText: apiarioNombre });
+    await expect(apiarioCard).toBeVisible();
   });
 
   test('debe poder crear una colmena', async ({ page }) => {
@@ -193,6 +212,10 @@ test.describe('Gestión de Apiarios, Colmenas e Inspecciones', () => {
     // Crear la colmena usando el helper
     const numeroColmena = `COL-${Date.now()}`;
     await createColmena(page, numeroColmena);
+
+    // Verificar que al volver a la vista anterior se muestra en el listado
+    const colmenaCard = page.locator('colmena-card').filter({ hasText: numeroColmena });
+    await expect(colmenaCard).toBeVisible();
   });
 
   test('debe poder realizar una inspección en colmena', async ({ page }) => {
@@ -212,6 +235,43 @@ test.describe('Gestión de Apiarios, Colmenas e Inspecciones', () => {
 
     // Realizar la inspección usando el helper
     await createInspeccion(page);
+
+    // Verificar que al volver a la vista anterior se muestra en el listado
+    const inspeccionCard = page.locator('inspeccion-card').filter({ hasText: numeroColmena });
+    await expect(inspeccionCard).toBeVisible();
+  });
+
+  test('debe poder trasladar una colmena', async ({ page }) => {
+    // Crear apiarios de origen y destino
+    const apiarioOrigen = `Apiario Origen ${Date.now()}`;
+    await createApiario(page, apiarioOrigen);
+
+    const apiarioDestino = `Apiario Destino ${Date.now()}`;
+    await createApiario(page, apiarioDestino);
+
+    // Navegar a colmenas y crear una colmena en el apiario de origen
+    await page.getByTestId('tab-colmenas').click();
+    await page.toHaveURLPath('/colmenas');
+
+    const numeroColmena = `COL-TRAS-${Date.now()}`;
+    await createColmena(page, numeroColmena, apiarioOrigen);
+
+    // Verificar que la colmena está asignada inicialmente al apiario de origen
+    const colmenaCard = page.locator('colmena-card').filter({ hasText: numeroColmena });
+    await expect(colmenaCard).toBeVisible();
+    await expect(colmenaCard).toContainText(apiarioOrigen);
+
+    // Iniciar traslado desde la tarjeta de la colmena
+    await colmenaCard.getByTestId('colmena-trasladar-btn').click();
+    await page.toHaveURLPath('/traslado');
+
+    // Completar y confirmar el traslado hacia el apiario de destino
+    await trasladarColmena(page, apiarioDestino, 'Floración / Trashumancia', 'Traslado por floración');
+
+    // Verificar que en el listado la colmena ahora figura en el apiario de destino
+    const colmenaCardActualizada = page.locator('colmena-card').filter({ hasText: numeroColmena });
+    await expect(colmenaCardActualizada).toBeVisible();
+    await expect(colmenaCardActualizada).toContainText(apiarioDestino);
   });
 });
 
@@ -376,7 +436,8 @@ test.describe('Conexión inestable / Latencia alta', () => {
     await setupGestionUser(page);
   });
 
-  test('debe manejar timeout con latencia alta y guardar localmente sin congelar la interfaz', async ({ page, context }) => {
+  test('debe manejar timeout con latencia alta y guardar localmente sin congelar la interfaz', async ({ page, context, browserName }) => {
+    test.skip(browserName !== 'chromium', 'CDP session is only available in Chromium');
     // Establecer sesión CDP para emular latencia alta (> 3s)
     const client = await context.newCDPSession(page);
     await client.send('Network.emulateNetworkConditions', {

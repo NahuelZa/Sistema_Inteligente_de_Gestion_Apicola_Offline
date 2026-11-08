@@ -1,8 +1,8 @@
 import {html, LitElement, nothing} from "lit";
 import {customElement, state} from "lit/decorators.js";
-import type {DocumentWithId} from "../../../services";
-import type {Colmena, Apiario} from "../../../models";
-import {EstadoModelo} from "../../../models";
+import type {ModeloBase} from "../../../models";
+import type {Colmena} from "../../../models";
+import {ColmenaModel} from "../../../models";
 import {colmenaService, apiarioService} from "../../../services";
 import {ROUTES} from "../../../constants";
 import {dispatchNavigate} from "../../../utils";
@@ -18,10 +18,8 @@ export class ColmenasListado extends LitElement {
 
   private feedback = new FeedbackController(this);
   private task: FirestoreController<Colmena> | null = null;
-  private listado = new ListadoController<DocumentWithId<Colmena>>(this, {
-    isInactive: (colmena) => colmena.estado === EstadoModelo.INACTIVO,
-  });
-  @state() private apiarios: DocumentWithId<Apiario>[] = [];
+  private listado = new ListadoController(this);
+  @state() private apiarios: ModeloBase[] = [];
   @state() private deletingId: string | null = null;
 
   private readonly layoutConfig: ListadoLayoutConfig = {
@@ -49,7 +47,7 @@ export class ColmenasListado extends LitElement {
       },
     });
     void apiarioService.getAll()
-      .then((apiarios: DocumentWithId<Apiario>[]) => {
+      .then((apiarios: ModeloBase[]) => {
         this.apiarios = apiarios;
       })
       .catch((error) => console.error("Error al cargar apiarios:", error));
@@ -67,25 +65,26 @@ export class ColmenasListado extends LitElement {
     this.listado.toggleInactive(e.detail.showInactive);
   }
 
-  private async handleDelete(colmena: DocumentWithId<Colmena>): Promise<void> {
+  private async handleDelete(colmena: ModeloBase): Promise<void> {
+    const c = colmena as ColmenaModel;
     const confirmAction = window.confirm(
-      colmena.estado === EstadoModelo.INACTIVO
-        ? `¿Estás seguro de reactivar la colmena "${colmena.numeroColmena}"?`
-        : `¿Estás seguro de dar de baja la colmena "${colmena.numeroColmena}"? Las inspecciones históricas se preservarán.`
+      !c.esActivo()
+        ? `¿Estás seguro de reactivar la colmena "${c.numeroColmena}"?`
+        : `¿Estás seguro de dar de baja la colmena "${c.numeroColmena}"? Las inspecciones históricas se preservarán.`
     );
     if (!confirmAction) return;
 
     try {
-      this.deletingId = colmena.id;
-      const esReactivacion = colmena.estado === EstadoModelo.INACTIVO;
+      this.deletingId = c.id;
+      const esReactivacion = !c.esActivo();
       if (esReactivacion) {
-        await colmenaService.reactivar(colmena.id);
+        await colmenaService.reactivar(c.id);
       } else {
-        await colmenaService.inactivar(colmena.id);
+        await colmenaService.inactivar(c.id);
       }
       await this.task!.loadDocuments();
       this.feedback.show(
-        `Colmena "${colmena.numeroColmena}" ${esReactivacion ? 'reactivada' : 'dada de baja'} correctamente.`,
+        `Colmena "${c.numeroColmena}" ${esReactivacion ? 'reactivada' : 'dada de baja'} correctamente.`,
         "success"
       );
     } catch (error) {
@@ -100,7 +99,7 @@ export class ColmenasListado extends LitElement {
     dispatchNavigate(this, `${ROUTES.TRASLADO}/${colmenaId}`);
   }
 
-  private renderItem(colmena: DocumentWithId<Colmena>) {
+  private renderItem = (colmena: ModeloBase) => {
     const deleting = this.deletingId === colmena.id;
     return html`
       <colmena-card
@@ -111,7 +110,7 @@ export class ColmenasListado extends LitElement {
         @trasladar=${(e: CustomEvent) => this.handleTrasladarColmena(e.detail.colmenaId)}
       ></colmena-card>
     `;
-  }
+  };
 
   override render() {
     if (!this.task) return nothing;
@@ -127,7 +126,7 @@ export class ColmenasListado extends LitElement {
           @listado-retry=${this.handleRetry}
         ></listado-error>
       `,
-      complete: (items: DocumentWithId<Colmena>[]) => {
+      complete: (items: ModeloBase[]) => {
         const filtrados = this.listado.getFilteredItems(items);
 
         return html`

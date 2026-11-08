@@ -31,7 +31,7 @@ export class InspeccionCard extends LitElement {
     }
 
     private getColmenaLabel(): string {
-        const colmena = this.colmenas.find((c) => c.id === this.inspeccion.colmenaId);
+        const colmena = this.colmenas?.find((c) => c.id === this.inspeccion?.colmenaId);
         return colmena ? `Colmena ${colmena.numeroColmena}` : "Sin Colmena";
     }
 

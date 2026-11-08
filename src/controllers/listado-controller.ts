@@ -1,28 +1,22 @@
 import type {ReactiveController, ReactiveControllerHost} from "lit";
-
-export interface ListadoControllerOptions<T> {
-  /**
-   * Función que determina si un item está inactivo.
-   */
-  isInactive: (item: T) => boolean;
-}
+import {ModeloBase} from "../models";
 
 /**
  * Controller reutilizable para gestionar el filtrado de items inactivos
-   * en componentes de listado.
-   *
-   * Encapsula el estado `mostrarInactivos` y la lógica de filtrado,
-   * eliminando código repetido entre los componentes de listado.
-   */
-export class ListadoController<T> implements ReactiveController {
+ * en componentes de listado.
+ *
+ * Encapsula el estado `mostrarInactivos` y la lógica de filtrado,
+ * eliminando código repetido entre los componentes de listado.
+ * Utiliza el método `esActivo()` de `ModeloBase` para determinar
+ * si un item está activo.
+ */
+export class ListadoController implements ReactiveController {
   private host: ReactiveControllerHost;
-  private isInactiveFn: (item: T) => boolean;
 
   public mostrarInactivos = false;
 
-  constructor(host: ReactiveControllerHost, options: ListadoControllerOptions<T>) {
+  constructor(host: ReactiveControllerHost) {
     this.host = host;
-    this.isInactiveFn = options.isInactive;
     host.addController(this);
   }
 
@@ -32,11 +26,12 @@ export class ListadoController<T> implements ReactiveController {
 
   /**
    * Filtra los items según el estado de `mostrarInactivos`.
+   * Usa el método `esActivo()` de cada modelo para determinar visibilidad.
    */
-  getFilteredItems(items: T[]): T[] {
+  getFilteredItems(items: ModeloBase[]): ModeloBase[] {
     return this.mostrarInactivos
       ? items
-      : items.filter((item) => !this.isInactiveFn(item));
+      : items.filter((item) => item.esActivo());
   }
 
   /**

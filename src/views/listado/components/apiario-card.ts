@@ -1,14 +1,14 @@
 import {LitElement, html, nothing} from "lit";
 import {customElement, property} from "lit/decorators.js";
-import type {DocumentWithId} from "../../../services/FirestoreService";
-import type {Apiario} from "../../../models/apiario.model";
+import type {ApiarioModel} from "../../../models/apiario.model";
+import type {ModeloBase} from "../../../models";
 
 /**
  * Componente para mostrar una tarjeta individual de Apiario.
  */
 @customElement("apiario-card")
 export class ApiarioCard extends LitElement {
-    @property({type: Object}) apiario!: DocumentWithId<Apiario>;
+    @property({type: Object}) apiario!: ModeloBase;
     @property({type: Boolean}) deleting = false;
 
     override createRenderRoot() {
@@ -28,13 +28,14 @@ export class ApiarioCard extends LitElement {
     override render() {
         if (!this.apiario) return nothing;
 
-        const esInactivo = this.apiario.estado === 'inactivo';
+        const a = this.apiario as ApiarioModel;
+        const esInactivo = !a.esActivo();
 
         return html`
-        <wa-card id="card-apiario-${this.apiario.id}">
+        <wa-card id="card-apiario-${a.id}">
             <div slot="header" class="wa-cluster wa-gap-xs wa-align-items-center">
                 <wa-icon name="cubes-stacked" style="color: var(--wa-color-brand); font-size: 1.15rem;"></wa-icon>
-                <strong class="wa-heading-s">${this.apiario.nombre}</strong>
+                <strong class="wa-heading-s">${a.nombre}</strong>
                 ${esInactivo ? html`<wa-badge variant="danger" appearance="accent" size="small">Inactivo</wa-badge>` : nothing}
             </div>
             <div slot="header-actions">
@@ -45,16 +46,16 @@ export class ApiarioCard extends LitElement {
             <div class="wa-stack wa-gap-xs">
                 <div class="wa-cluster wa-gap-xs wa-align-items-center wa-body-s wa-color-text-normal">
                     <wa-icon name="location-dot" class="wa-color-text-quiet"></wa-icon>
-                    <span><strong>Ubicación:</strong> ${this.apiario.ubicacion}</span>
+                    <span><strong>Ubicación:</strong> ${a.ubicacion}</span>
                 </div>
                 <div class="wa-cluster wa-gap-xs wa-align-items-center wa-body-s wa-color-text-normal">
                     <wa-icon name="note-sticky" class="wa-color-text-quiet"></wa-icon>
-                    <span>${this.apiario.notas}</span>
+                    <span>${a.notas}</span>
                 </div>
                 <div class="wa-cluster wa-gap-xs wa-align-items-center wa-caption-s wa-color-text-quiet">
                     <wa-icon name="calendar" class="wa-color-text-quiet"></wa-icon>
                     <span>
-              ${new Date(this.apiario.createdAtLocal!).toLocaleDateString("es-AR", {
+              ${new Date(a.createdAtLocal!).toLocaleDateString("es-AR", {
                     year: "numeric",
                     month: "short",
                     day: "numeric",

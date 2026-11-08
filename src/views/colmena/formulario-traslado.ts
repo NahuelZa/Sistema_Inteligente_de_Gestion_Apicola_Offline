@@ -2,11 +2,11 @@ import {html, LitElement} from "lit";
 import {customElement, property, state} from "lit/decorators.js";
 import {FeedbackController} from "../../controllers";
 import type {DocumentWithId} from "../../services";
-import {colmenaService} from "../../services";
+import {trasladoService} from "../../services";
 import type {Apiario, Colmena} from "../../models";
 import {MOTIVOS_TRASLADO} from "../../models";
 import {ROUTES} from "../../constants";
-import {dispatchNavigate} from "../../utils";
+import {dispatchNavigate, getTodayDateString} from "../../utils";
 
 /**
  * Vista de Traslado de Colmenas
@@ -37,11 +37,7 @@ export class FormularioTraslado extends LitElement {
   }
 
   private get today(): string {
-    const d = new Date();
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
+    return getTodayDateString();
   }
 
   private get selectedColmenasList(): DocumentWithId<Colmena>[] {
@@ -92,13 +88,13 @@ export class FormularioTraslado extends LitElement {
       return;
     }
 
-    const destinoApiario = this.apiarios.find((a) => a.id === apiarioDestinoId);
+    const destinoApiario = this.apiarios?.find((a) => a.id === apiarioDestinoId);
     const destinoNombre = destinoApiario?.nombre ?? "Apiario desconocido";
 
     try {
       this.loading = true;
 
-      await colmenaService.trasladarColmenas({
+      await trasladoService.trasladarColmenas({
         colmenas: colmenasSeleccionadas.map((c) => ({
           colmenaId: c.id,
           apiarioOrigenId: c.apiarioId,
@@ -147,7 +143,7 @@ export class FormularioTraslado extends LitElement {
   }
 
   private getApiarioNombre(apiarioId: string): string {
-    const apiario = this.apiarios.find((a) => a.id === apiarioId);
+    const apiario = this.apiarios?.find((a) => a.id === apiarioId);
     return apiario ? apiario.nombre : "Apiario desconocido";
   }
 
@@ -159,9 +155,9 @@ export class FormularioTraslado extends LitElement {
 
     return html`
       <div class="wa-stack" style="gap: var(--wa-space-l);">
-        <form id="form-traslado" class="beekeep-form" @submit=${this.handleSubmit}>
+        <form id="form-traslado" data-testid="form-traslado" class="beekeep-form" @submit=${this.handleSubmit}>
           <div class="form-group">
-            <wa-select id="traslado-colmena" name="colmenaId" placeholder="Seleccioná una o más colmenas" required with-clear size="m" multiple .value=${this.selectedColmenas} @change=${this.handleColmenaChange}>
+            <wa-select id="traslado-colmena" data-testid="traslado-colmena" name="colmenaId" placeholder="Seleccioná una o más colmenas" required with-clear size="m" multiple .value=${this.selectedColmenas} @change=${this.handleColmenaChange}>
               <span slot="label" class="field-label">Colmenas</span>
               ${this.colmenas.map(
                 (c) => html`<wa-option value=${c.id} ?selected=${this.selectedColmenas.includes(c.id)}>${c.numeroColmena} — ${this.getApiarioNombre(c.apiarioId)}</wa-option>`
@@ -170,7 +166,7 @@ export class FormularioTraslado extends LitElement {
           </div>
 
           <div class="form-group">
-            <wa-select id="traslado-destino" name="apiarioDestinoId" placeholder="Seleccioná el apiario de destino" required with-clear size="m">
+            <wa-select id="traslado-destino" data-testid="traslado-destino" name="apiarioDestinoId" placeholder="Seleccioná el apiario de destino" required with-clear size="m">
               <span slot="label" class="field-label">Apiario de destino</span>
               ${apiariosDestino.map(
                 (a) => html`<wa-option value=${a.id}>${a.nombre}</wa-option>`
@@ -179,11 +175,11 @@ export class FormularioTraslado extends LitElement {
           </div>
 
           <div class="form-group">
-            <wa-input id="traslado-fecha" name="fecha" type="date" label="Fecha del traslado" value=${this.today} size="m" required></wa-input>
+            <wa-input id="traslado-fecha" data-testid="traslado-fecha" name="fecha" type="date" label="Fecha del traslado" value=${this.today} size="m" required></wa-input>
           </div>
 
           <div class="form-group">
-            <wa-select id="traslado-motivo" name="motivo" placeholder="Seleccioná el motivo" required with-clear size="m">
+            <wa-select id="traslado-motivo" data-testid="traslado-motivo" name="motivo" placeholder="Seleccioná el motivo" required with-clear size="m">
               <span slot="label" class="field-label">Motivo del traslado</span>
               ${this.motivosTraslado.map(
                 (m) => html`<wa-option value=${m.value}>${m.label}</wa-option>`
@@ -192,20 +188,21 @@ export class FormularioTraslado extends LitElement {
           </div>
 
           <div class="form-group">
-            <wa-textarea id="traslado-notas" name="notas" label="Notas complementarias" placeholder="Detalles adicionales sobre el traslado..." rows="3" size="m"></wa-textarea>
+            <wa-textarea id="traslado-notas" data-testid="traslado-notas" name="notas" label="Notas complementarias" placeholder="Detalles adicionales sobre el traslado..." rows="3" size="m"></wa-textarea>
           </div>
 
-          <div id="traslado-feedback" class="feedback-container" aria-live="polite">
+          <div id="traslado-feedback" data-testid="traslado-feedback" class="feedback-container" aria-live="polite">
             ${this.feedback.render()}
           </div>
 
           <div class="form-actions" style="display: flex; gap: var(--wa-space-s);">
-            <wa-button id="traslado-submit-btn" type="submit" variant="brand" appearance="accent" class="beekeep-btn-submit" ?loading=${this.loading}>
+            <wa-button id="traslado-submit-btn" data-testid="traslado-submit-btn" type="submit" variant="brand" appearance="accent" class="beekeep-btn-submit" ?loading=${this.loading}>
               <wa-icon slot="start" name="truck"></wa-icon>
               Registrar traslado
             </wa-button>
             <wa-button
               id="traslado-cancel-btn"
+              data-testid="traslado-cancel-btn"
               type="button"
               variant="neutral"
               appearance="outlined"

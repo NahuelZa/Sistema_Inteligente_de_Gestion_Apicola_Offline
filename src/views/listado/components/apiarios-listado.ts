@@ -1,8 +1,8 @@
 import {html, LitElement, nothing} from "lit";
 import {customElement, state} from "lit/decorators.js";
-import type {DocumentWithId} from "../../../services";
+import type {ModeloBase} from "../../../models";
 import {apiarioService} from "../../../services";
-import {type Apiario, EstadoModelo} from "../../../models";
+import {ApiarioModel, type Apiario} from "../../../models";
 import {ROUTES} from "../../../constants";
 import {dispatchNavigate} from "../../../utils";
 import {FeedbackController, FirestoreController, ListadoController} from "../../../controllers";
@@ -16,9 +16,7 @@ export class ApiariosListado extends LitElement {
 
   private feedback = new FeedbackController(this);
   private task: FirestoreController<Apiario> | null = null;
-  private listado = new ListadoController<DocumentWithId<Apiario>>(this, {
-    isInactive: (apiario) => apiario.estado === EstadoModelo.INACTIVO,
-  });
+  private listado = new ListadoController(this);
   @state() private deletingId: string | null = null;
 
   private readonly layoutConfig: ListadoLayoutConfig = {
@@ -59,25 +57,26 @@ export class ApiariosListado extends LitElement {
     this.listado.toggleInactive(e.detail.showInactive);
   }
 
-  private async handleDelete(apiario: DocumentWithId<Apiario>): Promise<void> {
+  private async handleDelete(apiario: ModeloBase): Promise<void> {
+    const a = apiario as ApiarioModel;
     const confirmAction = window.confirm(
-      apiario.estado === 'inactivo'
-        ? `¿Estás seguro de reactivar el apiario "${apiario.nombre}"?`
-        : `¿Estás seguro de dar de baja el apiario "${apiario.nombre}"? Las colmenas e inspecciones asociadas se preservarán.`
+      !a.esActivo()
+        ? `¿Estás seguro de reactivar el apiario "${a.nombre}"?`
+        : `¿Estás seguro de dar de baja el apiario "${a.nombre}"? Las colmenas e inspecciones asociadas se preservarán.`
     );
     if (!confirmAction) return;
 
     try {
-      this.deletingId = apiario.id;
-      const esReactivacion = apiario.estado === 'inactivo';
+      this.deletingId = a.id;
+      const esReactivacion = !a.esActivo();
       if (esReactivacion) {
-        await apiarioService.reactivar(apiario.id);
+        await apiarioService.reactivar(a.id);
       } else {
-        await apiarioService.inactivar(apiario.id);
+        await apiarioService.inactivar(a.id);
       }
       await this.task!.loadDocuments();
       this.feedback.show(
-        `Apiario "${apiario.nombre}" ${esReactivacion ? 'reactivado' : 'dado de baja'} correctamente.`,
+        `Apiario "${a.nombre}" ${esReactivacion ? 'reactivado' : 'dado de baja'} correctamente.`,
         "success"
       );
     } catch (error) {
@@ -88,7 +87,7 @@ export class ApiariosListado extends LitElement {
     }
   }
 
-  private renderItem(apiario: DocumentWithId<Apiario>) {
+  private renderItem = (apiario: ModeloBase) => {
     const deleting = this.deletingId === apiario.id;
     return html`
       <apiario-card
@@ -97,7 +96,7 @@ export class ApiariosListado extends LitElement {
         @delete=${(e: CustomEvent) => this.handleDelete(e.detail.apiario)}
       ></apiario-card>
     `;
-  }
+  };
 
   override render() {
     if (!this.task) return nothing;
@@ -113,7 +112,7 @@ export class ApiariosListado extends LitElement {
           @listado-retry=${this.handleRetry}
         ></listado-error>
       `,
-      complete: (items: DocumentWithId<Apiario>[]) => {
+      complete: (items: ModeloBase[]) => {
         const filtrados = this.listado.getFilteredItems(items);
 
         return html`
