@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from "vitest";
 import {
   initializeTestEnvironment,
-  type RulesTestEnvironment
+  type RulesTestEnvironment,
+  type RulesTestContext
 } from "@firebase/rules-unit-testing";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -17,7 +18,7 @@ import { collection, getDocs, query, where, deleteDoc, doc } from "firebase/fire
  */
 describe("ApiarioService - Inactivar con colmenas activas (emulator)", () => {
   let testEnv: RulesTestEnvironment;
-  let authenticatedDb: firebase.firestore.Firestore;
+  let authenticatedDb: ReturnType<RulesTestContext["firestore"]>;
 
   const testUserId = "user-integration-test";
 

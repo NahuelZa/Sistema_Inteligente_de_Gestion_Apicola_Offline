@@ -149,11 +149,11 @@ La consigna del TPI solicita los siguientes tags:
 
 **Feedback profesional:** Crear los tags correspondientes sobre los commits adecuados antes de realizar la entrega final.
 
-### CR-08 — El build actual no finaliza completamente
+### CR-08 — Errores de compilación detectados y corregidos
 
 **Ubicación:** configuración general del proyecto y archivos de pruebas.
 
-**Estado:** Cumple parcialmente.
+**Estado:** Corregido.
 
 Durante la revisión técnica se ejecutó el comando:
 
@@ -167,6 +167,7 @@ Entre los problemas encontrados se observaron:
 - Uso de un valor literal `"activo"` donde el modelo esperaba el tipo `EstadoModelo`.
 - Pruebas que hacían referencia a métodos que ya no existían con la misma firma en los servicios actuales.
 - Funciones declaradas pero no utilizadas dentro de los tests de Playwright.
+- Un problema de tipado en el test de integración de Firebase.
 
 **Correcciones realizadas:**
 
@@ -174,33 +175,74 @@ Entre los problemas encontrados se observaron:
 - Se actualizó `tsconfig.json` para incluir los tipos de Node.js.
 - Se reemplazó el valor literal `"activo"` por `EstadoModelo.ACTIVO` en `formulario-apiario.ts`.
 - Se eliminó código muerto dentro de `tests/playwright/app.spec.ts`.
-- Se eliminó un test desactualizado que esperaba un método `delete()` que ya no forma parte de `FirestoreService`.
+- Se eliminó una prueba desactualizada que esperaba un método `delete()` que ya no forma parte de `FirestoreService`.
+- Se corrigió el tipo utilizado por `tests/firestore-integration.test.ts` para que coincida con el tipo devuelto por `RulesTestContext`.
 
 **Resultado posterior a las correcciones:**
 
-Luego de estas modificaciones, la cantidad de errores reportados por `npm run build` se redujo de **16 errores en 6 archivos a 1 error en 1 archivo**.
+Luego de las modificaciones, se volvió a ejecutar:
 
-El único error restante se encuentra en `tests/firestore-integration.test.ts` y está relacionado con una incompatibilidad de tipado de Firebase.
+`npm run build`
 
-**Impacto:** La revisión permitió corregir la mayoría de los problemas de compilación detectados sin modificar la lógica funcional principal del sistema. Sin embargo, el proyecto todavía no cumple completamente el criterio de aceptación que exige que `npm run build` finalice sin errores.
+El proceso finalizó correctamente y Vite generó los archivos de producción y el Service Worker de la PWA sin errores de TypeScript.
 
-**Feedback profesional:** Se recomienda revisar posteriormente la compatibilidad de tipos utilizada por el test de integración de Firebase. Debido a que esta corrección puede implicar cambios en configuración, dependencias o contratos de prueba, se dejó registrada como mejora pendiente para evitar introducir cambios de mayor riesgo durante el cierre del proyecto.
+**Impacto:** Se logró recuperar una compilación limpia del proyecto sin introducir modificaciones de alto riesgo sobre la lógica funcional principal.
 
-### CR-09 — Incompatibilidad de tipado en test de integración de Firebase
+**Feedback profesional:** Mantener la verificación de build como control obligatorio antes de integrar cambios, ya que permitió detectar inconsistencias entre código, configuración y pruebas que no eran visibles durante el uso normal de la aplicación.
 
-**Ubicación:** `tests/firestore-integration.test.ts`
+### CR-09 — Verificación de pruebas automatizadas
 
-**Estado:** Mejora pendiente.
+**Ubicación:** `tests/`, configuración de Firebase y pruebas Playwright.
 
-Luego de corregir los errores de configuración y sincronización detectados durante el Code Review, quedó un único error de compilación relacionado con el tipo:
+**Estado:** Cumple con observaciones.
 
-`firebase.firestore.Firestore`
+Durante el Code Review se realizaron verificaciones sobre las pruebas automatizadas del proyecto.
 
-El test utiliza una referencia de tipado que no coincide completamente con la API y configuración actual de Firebase empleada por el proyecto.
+### Pruebas unitarias
 
-**Impacto:** La lógica funcional de la aplicación no se encuentra directamente afectada, pero el error impide que el comando general `npm run build` finalice completamente mientras este test forme parte de la verificación de TypeScript.
+Se ejecutó:
 
-**Feedback profesional:** Se recomienda revisar posteriormente la compatibilidad entre las versiones del SDK de Firebase, Firebase Rules Unit Testing y los tipos utilizados por el test de integración. Debido a que esto implica modificar configuración y contratos de pruebas, se deja registrado como mejora pendiente para evitar introducir cambios de alto riesgo durante el cierre del proyecto.
+`npm test`
+
+El resultado fue satisfactorio:
+
+- 1 archivo de pruebas aprobado.
+- 2 pruebas unitarias aprobadas.
+- 0 pruebas fallidas.
+
+Estas pruebas verificaron controles relacionados con autenticación y acceso a operaciones de Firestore.
+
+### Pruebas End-to-End
+
+Se ejecutó inicialmente la suite completa de Playwright sobre múltiples navegadores.
+
+El resultado general fue:
+
+- 60 pruebas ejecutadas.
+- 45 pruebas aprobadas.
+- 15 pruebas fallidas.
+
+Las fallas restantes se concentraron principalmente en Firefox, WebKit y Mobile Safari, y estuvieron asociadas a problemas de conexión local y tiempos de espera durante la ejecución.
+
+Para aislar el comportamiento funcional principal se ejecutó posteriormente:
+
+`npx playwright test --project=chromium`
+
+El resultado fue:
+
+- 12 pruebas ejecutadas.
+- 12 pruebas aprobadas.
+- 0 pruebas fallidas.
+
+Esto permitió comprobar correctamente los principales flujos funcionales de BeeKeep en Chromium.
+
+### Resultado
+
+Las pruebas principales del sistema finalizaron satisfactoriamente en Chromium y las pruebas unitarias también fueron aprobadas.
+
+Las fallas detectadas en otros navegadores quedaron registradas como una oportunidad de mejora relacionada con compatibilidad multiplataforma, sincronización y tiempos de espera de las pruebas E2E.
+
+**Feedback profesional:** Se recomienda continuar ajustando los tests E2E para mejorar su estabilidad en Firefox, WebKit y dispositivos móviles simulados, evitando dependencias excesivas de tiempos fijos o condiciones particulares del entorno local.
 
 ## Verificación posterior a las correcciones
 
@@ -317,3 +359,15 @@ Para considerar aprobada la revisión técnica se establecen los siguientes crit
 7. Las correcciones consideradas necesarias para la entrega deben realizarse y verificarse nuevamente.
 8. La documentación debe representar correctamente el estado final del sistema.
 9. El repositorio debe contener las evidencias y elementos de trazabilidad exigidos para la entrega.
+
+## Estado actual de aceptación técnica
+
+A partir de las verificaciones realizadas, el proyecto cumple con los principales controles de calidad definidos para esta etapa:
+
+- Las pruebas unitarias ejecutadas con Vitest finalizaron correctamente.
+- Las pruebas E2E ejecutadas en Chromium finalizaron correctamente.
+- El build de producción finalizó correctamente.
+- Las correcciones realizadas durante el Code Review no introdujeron regresiones funcionales detectables en los controles ejecutados.
+- Las observaciones de mayor alcance quedaron documentadas como mejoras futuras.
+
+El estado definitivo de algunos criterios vinculados a la arquitectura y trazabilidad del repositorio quedará sujeto a la integración final de los cambios pendientes del equipo.
