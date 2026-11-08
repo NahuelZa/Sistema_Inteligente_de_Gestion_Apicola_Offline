@@ -6,20 +6,6 @@ import type { Apiario, Colmena, Inspeccion,  } from "../../models";
 import type { DocumentWithId } from "../../services";
 import { ROUTES } from "../../constants";
 import { dispatchNavigate, getTodayDateString } from "../../utils";
-
-/**
- * Valores por defecto para un formulario de inspección.
- */
-const DEFAULT_INSPECCION = {
-  fecha: "",
-  poblacion: "media" as const,
-  reinaVista: false,
-  tienePostura: false,
-  estadoSanitario: "bueno" as const,
-  enfermedadesDetectadas: "",
-  notas: "",
-} as const;
-
 /**
  * Datos extraídos del formulario de inspección.
  */
