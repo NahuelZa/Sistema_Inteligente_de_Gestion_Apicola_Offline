@@ -251,6 +251,59 @@ Las observaciones de bajo riesgo y alto valor fueron corregidas. Los cambios de 
 
 La revisión se considera satisfactoria, manteniendo como objetivo principal preservar el comportamiento externo del sistema mientras se mejora progresivamente su calidad interna.
 
+## Registro de acciones realizadas durante el Code Review
+
+A partir de las observaciones detectadas se seleccionaron correcciones de bajo riesgo que permitieran mejorar la calidad interna sin modificar el comportamiento funcional principal de BeeKeep.
+
+### Acciones realizadas
+
+1. **Actualización de documentación**
+   - Se actualizó `README.md` para reflejar que el historial de traslados ya se encuentra implementado.
+   - Se eliminó la indicación incorrecta de funcionalidad pendiente.
+
+2. **Mejora del tipado en TypeScript**
+   - Se reemplazó el literal `"activo"` por `EstadoModelo.ACTIVO` en `formulario-apiario.ts`.
+   - Se mejoró el tipado de los elementos utilizados dentro del formulario.
+
+3. **Configuración de tipos de Node.js**
+   - Se incorporó `@types/node` como dependencia de desarrollo.
+   - Se agregó el tipo `node` a la configuración de TypeScript para permitir el reconocimiento correcto de APIs utilizadas por archivos de configuración y pruebas.
+
+4. **Eliminación de código muerto**
+   - Se eliminaron funciones auxiliares dentro de las pruebas E2E que ya no eran utilizadas.
+
+5. **Actualización de pruebas desactualizadas**
+   - Se eliminó una prueba que todavía esperaba el método genérico `delete()` de `FirestoreService`.
+   - La implementación actual utiliza mecanismos de baja lógica específicos para las entidades, por lo que dicha prueba ya no representaba el comportamiento real del sistema.
+
+### Criterio utilizado para seleccionar las correcciones
+
+No todas las observaciones detectadas fueron modificadas.
+
+Se priorizaron aquellas que:
+
+- presentaban bajo riesgo de introducir regresiones;
+- podían justificarse mediante evidencia concreta;
+- mejoraban tipado, documentación o mantenibilidad;
+- no requerían modificar la arquitectura general desarrollada por el equipo.
+
+Las observaciones que implicaban cambios estructurales de mayor alcance fueron documentadas como mejoras futuras.
+
+## Mejoras futuras
+
+Durante el Code Review también se identificaron oportunidades de mejora que no fueron abordadas en esta etapa debido a su mayor alcance o riesgo técnico.
+
+Entre ellas se encuentran:
+
+- Continuar reduciendo los usos de `any` y reemplazarlos por tipos específicos de TypeScript.
+- Revisar archivos extensos y evaluar la extracción de responsabilidades cuando su crecimiento lo justifique.
+- Centralizar el manejo y registro de errores para evitar estrategias diferentes entre componentes.
+- Mantener sincronizados los tests automatizados con los cambios realizados en los servicios y modelos.
+- Revisar periódicamente la documentación para asegurar que represente el estado real del sistema.
+- Fortalecer la trazabilidad entre refactorings, pruebas, documentación y commits del repositorio.
+
+Estas mejoras no representan necesariamente fallas funcionales actuales, sino oportunidades para facilitar la mantenibilidad y evolución futura del proyecto.
+
 ## Criterios de aceptación técnica
 
 Para considerar aprobada la revisión técnica se establecen los siguientes criterios:
