@@ -13,18 +13,6 @@ async function registerAccount(page: any, email: string, password: string) {
   await page.toHaveURLPath('/apiarios');
 }
 
-/**
- * Inicia sesión con las credenciales proporcionadas.
- */
-async function login(page: any, email: string, password: string) {
-  await page.goto('/');
-  await page.getByWaInput('auth-email').fill(email);
-  await page.getByWaInput('auth-password').fill(password);
-  await page.getByTestId('auth-submit-btn').click();
-
-  // Esperar la redirección a /apiarios como indicador de login exitoso
-  await page.toHaveURLPath('/apiarios');
-}
 
 /**
  * Crea un apiario con el nombre proporcionado y verifica el mensaje de éxito.
