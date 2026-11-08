@@ -206,6 +206,10 @@ test.describe('Gestión de Apiarios, Colmenas e Inspecciones', () => {
     // Crear el apiario usando el helper
     const apiarioNombre = `Apiario Test ${Date.now()}`;
     await createApiario(page, apiarioNombre);
+
+    // Verificar que al volver a la vista anterior se muestra en el listado
+    const apiarioCard = page.locator('apiario-card').filter({ hasText: apiarioNombre });
+    await expect(apiarioCard).toBeVisible();
   });
 
   test('debe poder crear una colmena', async ({ page }) => {
@@ -220,6 +224,10 @@ test.describe('Gestión de Apiarios, Colmenas e Inspecciones', () => {
     // Crear la colmena usando el helper
     const numeroColmena = `COL-${Date.now()}`;
     await createColmena(page, numeroColmena);
+
+    // Verificar que al volver a la vista anterior se muestra en el listado
+    const colmenaCard = page.locator('colmena-card').filter({ hasText: numeroColmena });
+    await expect(colmenaCard).toBeVisible();
   });
 
   test('debe poder realizar una inspección en colmena', async ({ page }) => {
@@ -239,6 +247,10 @@ test.describe('Gestión de Apiarios, Colmenas e Inspecciones', () => {
 
     // Realizar la inspección usando el helper
     await createInspeccion(page);
+
+    // Verificar que al volver a la vista anterior se muestra en el listado
+    const inspeccionCard = page.locator('inspeccion-card').filter({ hasText: numeroColmena });
+    await expect(inspeccionCard).toBeVisible();
   });
 
   test('debe poder trasladar una colmena', async ({ page }) => {

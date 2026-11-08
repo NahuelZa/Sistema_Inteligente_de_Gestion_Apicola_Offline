@@ -134,20 +134,22 @@ export class FormularioInspeccion extends LitElement {
   }
 
   private resetearFormulario(form: HTMLFormElement): void {
-    const campos = form.querySelectorAll<HTMLInputElement | HTMLSelectElement>("input, select, textarea");
-    campos.forEach(campo => {
-      if (campo instanceof HTMLInputElement && campo.type === "checkbox") {
-        campo.checked = false;
-      } else if (campo.id === "inspeccion-fecha") {
-        (campo as HTMLInputElement | HTMLSelectElement).value = this.today;
-      } else if (campo.id === "inspeccion-poblacion") {
-        (campo as HTMLInputElement | HTMLSelectElement).value = DEFAULT_INSPECCION.poblacion;
-      } else if (campo.id === "inspeccion-sanidad") {
-        (campo as HTMLInputElement | HTMLSelectElement).value = DEFAULT_INSPECCION.estadoSanitario;
-      } else {
-        (campo as HTMLInputElement | HTMLSelectElement).value = "";
-      }
-    });
+    const colmenaSelect = form.querySelector<any>("#inspeccion-colmena")!;
+    const fechaInput = form.querySelector<any>("#inspeccion-fecha")!;
+    const poblacionSelect = form.querySelector<any>("#inspeccion-poblacion")!;
+    const reinaCheckbox = form.querySelector<any>("#inspeccion-reina")!;
+    const posturaCheckbox = form.querySelector<any>("#inspeccion-postura")!;
+    const sanidadSelect = form.querySelector<any>("#inspeccion-sanidad")!;
+    const enfermedadesInput = form.querySelector<any>("#inspeccion-enfermedades")!;
+    const notasTextarea = form.querySelector<any>("#inspeccion-notas")!;
+    colmenaSelect.value = "";
+    fechaInput.value = this.today;
+    poblacionSelect.value = "media";
+    reinaCheckbox.checked = false;
+    posturaCheckbox.checked = false;
+    sanidadSelect.value = "bueno";
+    enfermedadesInput.value = "";
+    notasTextarea.value = "";
   }
 
   private navigateToListado(): void {
