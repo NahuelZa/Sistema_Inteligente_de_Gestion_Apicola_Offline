@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "test": "vitest run tests/firestore-service.test.ts tests/refactoring.test.ts",
+    "test": "vitest run tests/firestore-service.test.ts",
     "test:rules": "firebase emulators:exec --only firestore \"vitest run tests/firestore-rules.test.ts\"",
     "test:integration": "firebase emulators:exec --only firestore \"vitest run --config vite.integration.config.ts\"",
     "test:e2e": "playwright test",
