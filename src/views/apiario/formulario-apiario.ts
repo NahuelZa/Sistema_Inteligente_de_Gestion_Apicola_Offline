@@ -2,9 +2,13 @@ import { LitElement, html } from "lit";
 import { FeedbackController } from "../../controllers";
 import { customElement, state } from "lit/decorators.js";
 import { apiarioService, authService } from "../../services";
-import type { Apiario } from "../../models";
+import { EstadoModelo, type Apiario } from "../../models";
 import { ROUTES } from "../../constants";
 import { dispatchNavigate } from "../../utils";
+
+type FormValueElement = HTMLElement & {
+  value: string;
+};
 
 /**
  * Vista de Alta de Apiario
@@ -22,9 +26,14 @@ export class FormularioApiario extends LitElement {
     event.preventDefault();
     const form = event.target as HTMLFormElement;
 
-    const nombreInput = form.querySelector<any>("#apiario-nombre")!;
-    const ubicacionInput = form.querySelector<any>("#apiario-ubicacion")!;
-    const descTextarea = form.querySelector<any>("#apiario-descripcion")!;
+    const nombreInput =
+      form.querySelector<FormValueElement>("#apiario-nombre")!;
+
+    const ubicacionInput =
+      form.querySelector<FormValueElement>("#apiario-ubicacion")!;
+
+    const descTextarea =
+      form.querySelector<FormValueElement>("#apiario-descripcion")!;
 
     const nombre = nombreInput.value.trim();
     const ubicacion = ubicacionInput.value.trim();
@@ -37,7 +46,7 @@ export class FormularioApiario extends LitElement {
       nombre,
       ubicacion,
       notas,
-      estado: 'activo',
+      estado: EstadoModelo.ACTIVO,
       createdAtLocal: new Date().toISOString(),
     };
 

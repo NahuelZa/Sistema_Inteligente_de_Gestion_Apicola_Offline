@@ -13,18 +13,6 @@ async function registerAccount(page: any, email: string, password: string) {
   await page.toHaveURLPath('/apiarios');
 }
 
-/**
- * Inicia sesión con las credenciales proporcionadas.
- */
-async function login(page: any, email: string, password: string) {
-  await page.goto('/');
-  await page.getByWaInput('auth-email').fill(email);
-  await page.getByWaInput('auth-password').fill(password);
-  await page.getByTestId('auth-submit-btn').click();
-
-  // Esperar la redirección a /apiarios como indicador de login exitoso
-  await page.toHaveURLPath('/apiarios');
-}
 
 /**
  * Crea un apiario con el nombre proporcionado y verifica el mensaje de éxito.
@@ -102,27 +90,6 @@ async function createInspeccion(page: any) {
   await page.toHaveURLPath('/inspecciones');
 }
 
-/**
- * Crea una cuenta nueva, cierra sesión y vuelve a iniciar sesión.
- * Retorna el email y password generados para uso posterior.
- */
-async function registerAndLogin(page: any, prefix: string) {
-  const testEmail = `${prefix}-${Date.now()}@example.com`;
-  const testPassword = 'password123';
-
-  // Crear cuenta (registerAccount espera la redirección a /apiarios internamente)
-  await page.goto('/');
-  await page.getByTestId('auth-toggle-mode').click();
-  await registerAccount(page, testEmail, testPassword);
-
-  // Cerrar sesión y volver a iniciar para usar el helper
-  await page.getByTestId('logout-btn').click();
-  await page.toHaveURLPath('/login');
-  // login() espera la redirección a /apiarios internamente
-  await login(page, testEmail, testPassword);
-
-  return { testEmail, testPassword };
-}
 
 // Credenciales compartidas para los tests de gestión
 const gestionEmail = 'gestion-shared@example.com';
